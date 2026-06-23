@@ -152,6 +152,19 @@ body{
 .dev-tt b{color:var(--gold)}
 .dev-tt-ic{font-size:18px}
 
+/* ---------- Menú: asistente de 2 pasos ---------- */
+.wizard-step{margin-bottom:10px}
+.step-head{display:flex; align-items:center; gap:10px; font-weight:900; font-size:20px; margin:20px 0 12px}
+.step-num{display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--gold)); color:#1a1a1a; font-size:18px; flex:0 0 auto}
+.wizard-step.locked .step-num{background:#2a2f45; color:var(--muted)}        /* paso bloqueado: número apagado */
+#step1 .step-num{box-shadow:0 0 0 4px rgba(6,214,160,.22)}                   /* paso 1 siempre activo */
+.step-lock{display:none}
+.wizard-step.locked .step-lock{display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:14px; border:1px dashed var(--card-bd); border-radius:14px; color:var(--muted);
+  font-weight:800; margin-bottom:14px; background:rgba(255,255,255,.03)}
+.step-body{transition:opacity .3s, filter .3s}
+.wizard-step.locked .step-body{opacity:.4; filter:grayscale(.7); pointer-events:none; user-select:none}
 /* ---------- Menú: separación y aviso de versión ---------- */
 #menu .game-grid{margin-bottom:28px}      /* aire entre los juegos y la conexión */
 #menu #tiktokCard{border-color:#ff5c7a55}

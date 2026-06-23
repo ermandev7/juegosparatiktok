@@ -25,6 +25,7 @@
     wordMap: new Map(),     // palabra clave -> {racer, pts}
     userLast: new Map(),    // uniqueId del espectador -> racer al que votó por última vez
     likeBuf: new Map(),     // uniqueId -> likes acumulados pendientes de convertir a puntos
+    ttConnected: false,     // ¿conectado a un Live? (Paso 2 bloqueado hasta que sea true)
   };
 
   /* normaliza texto a minúsculas sin acentos (para comparar palabras clave) */
@@ -423,6 +424,12 @@
      CONFIGURACIÓN DE JUEGO
      ============================================================ */
   function openGame(id){
+    // Paso a paso: no se puede elegir juego sin estar conectado al Live.
+    if (!state.ttConnected){
+      const s1 = document.getElementById('step1'); if (s1) s1.scrollIntoView({ behavior:'smooth', block:'center' });
+      const u = document.getElementById('ttUser'); if (u) u.focus();
+      return;
+    }
     state.gameId = id;
     const g = game();
     state.catId = g.categories ? Object.keys(g.categories)[0] : null;
@@ -1351,6 +1358,10 @@
       const live = stt === 'connected';
       if (connBtn) connBtn.hidden = live;
       if (discBtn) discBtn.hidden = !live;
+      // Paso 2 (elegir juego) se DESBLOQUEA solo al conectar; se bloquea si se cae la conexión.
+      state.ttConnected = live;
+      const step2 = document.getElementById('step2');
+      if (step2) step2.classList.toggle('locked', !live);
     });
     TikTok.onGift(onGift);
     TikTok.onComment(onComment);                 // comentarios con palabra clave

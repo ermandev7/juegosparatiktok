@@ -11,3 +11,6 @@ dist/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Privado (no publicar)
+biblioteca-regalos.md
