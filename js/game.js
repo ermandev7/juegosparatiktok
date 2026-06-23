@@ -287,10 +287,28 @@
         g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.18);
         g.gain.linearRampToValueAtTime(0.0001, t + dur);
         nb.connect(bp).connect(g).connect(master); nb.start(t); nb.stop(t + dur + 0.02);
+        const fut = (theme==='futbol'   || theme==='cancha');
+        const atl = (theme==='resistencia'|| theme==='ruta' || theme==='pista');
         if (theme==='boxeo' || theme==='ring'){                // boxeo: palmas del público
           const claps = Math.round(2 + amount * 2);
           for (let i = 0; i < claps; i++) setTimeout(clap, i*85 + Math.random()*40);
         }
+        if (fut || atl){                                       // fútbol/atletismo: silbidos
+          if (Math.random() < (fut ? 0.7 : 0.5)) setTimeout(() => whistle(0.15 + Math.random()*0.1), Math.random()*220);
+        }
+        if (fut){                                              // fútbol: tambor de barra (3 golpes)
+          for (let i = 0; i < 3; i++) setTimeout(drum, 110 + i*180);
+        }
+      }
+      // golpe grave de tambor (barra de fútbol)
+      function drum(){
+        const c = ac(); if (!c) return; const t = c.currentTime;
+        const o = c.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(52, t+0.13);
+        const g = c.createGain();
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t+0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+0.2);
+        o.connect(g).connect(master); o.start(t); o.stop(t+0.22);
       }
       function clap(){
         const c = ac(); if (!c) return; const t = c.currentTime;
@@ -888,7 +906,37 @@
     if (!entry) return;
     if (c.uniqueId) state.userLast.set(c.uniqueId, entry.racer);
     addPoint(entry.racer, state.commentPts);
+    SFX.crowd.bump(0.6);                                       // el público también se anima
+    // ¡grita el nombre del competidor y lo muestra en grande! (con throttle para no saturar)
+    const now = performance.now();
+    if (!state._lastShout || now - state._lastShout > 1100){
+      state._lastShout = now;
+      spawnNameShout(entry.racer.name, entry.racer.color);
+      speakName(entry.racer.name);
+    }
     if (state.commentPts > 0) showActionToast('comment', '💬', c.user, 'comentó', entry.racer, state.commentPts);
+  }
+
+  /* Texto GIGANTE con el nombre del competidor que sube desde abajo con zoom (al comentar). */
+  function spawnNameShout(text, color){
+    const scene = $('#scene'); if (!scene || !text) return;
+    const el = document.createElement('div');
+    el.className = 'name-shout';
+    el.style.setProperty('--c', color || '#ffd166');
+    el.textContent = text;
+    scene.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+
+  /* Voz que "grita" el nombre (Web Speech API, voz del sistema). Respeta el silencio. */
+  function speakName(text){
+    try {
+      if (!text || SFX.isMuted() || !('speechSynthesis' in window)) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'es-ES'; u.rate = 1; u.pitch = 1.05; u.volume = 1;
+      window.speechSynthesis.cancel();                         // no encolar: el último manda
+      window.speechSynthesis.speak(u);
+    } catch(_){}
   }
 
   /* Llegan LIKES (en lote): se atribuyen a quien este espectador votó por última vez.

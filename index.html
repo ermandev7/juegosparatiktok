@@ -6,7 +6,7 @@
   <title>🏁 Carrera Live — TikFinity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=35" />
+  <link rel="stylesheet" href="css/styles.css?v=36" />
 </head>
 <body>
 
@@ -46,30 +46,30 @@
           <div class="tt-actions">
             <label class="tt-act">
               <input type="checkbox" id="commentsOn" checked />
-              <span>💬 Comentarios suman
+              <span>💬 Comentar el <b>nombre del competidor</b> suma
                 <input type="number" id="commentPts" value="1" min="0" max="999" /> pts
-                <small>cuando el comentario contiene la palabra clave del competidor</small></span>
+                <small>¡y se grita su nombre y aparece en grande! Ej.: escriben “Colombia” → +pts a Colombia</small></span>
             </label>
             <label class="tt-act">
               <input type="checkbox" id="likesOn" checked />
               <span>❤️ Cada <input type="number" id="likesPer" value="10" min="1" max="9999" /> likes =
                 <input type="number" id="likePts" value="1" min="0" max="999" /> pts
-                <small>se suman a quien esa persona votó por última vez (comentario o regalo)</small></span>
+                <small>para el competidor que esa persona apoya · y sube el ruido del público</small></span>
             </label>
             <label class="tt-act">
               <input type="checkbox" id="followOn" checked />
               <span>➕ Seguir suma
                 <input type="number" id="followPts" value="3" min="0" max="999" /> pts
-                <small>a quien esa persona votó por última vez (comentario o regalo)</small></span>
+                <small>para el competidor que esa persona apoya</small></span>
             </label>
             <label class="tt-act">
               <input type="checkbox" id="shareOn" checked />
               <span>🔁 Compartir suma
                 <input type="number" id="sharePts" value="2" min="0" max="999" /> pts
-                <small>a quien esa persona votó por última vez (comentario o regalo)</small></span>
+                <small>para el competidor que esa persona apoya · y sube el ruido del público</small></span>
             </label>
           </div>
-          <p class="tt-help">⚙️ Requiere el puente: ejecuta <code>Iniciar Carrera Live.bat</code> (o en la carpeta <code>server</code> corre <code>npm install</code> y <code>npm start</code> la primera vez). El usuario queda guardado: no tendrás que escribirlo de nuevo.</p>
+          <p class="tt-help">⚙️ Para el Live real: abre <code>Iniciar Carrera Live.bat</code> (solo la primera vez). Tu usuario queda guardado.</p>
         </details>
       </div>
 
@@ -218,8 +218,8 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=35"></script>
-  <script src="js/tiktok.js?v=35"></script>
-  <script src="js/game.js?v=35"></script>
+  <script src="js/data.js?v=36"></script>
+  <script src="js/tiktok.js?v=36"></script>
+  <script src="js/game.js?v=36"></script>
 </body>
 </html>
