@@ -111,8 +111,10 @@ body{
 
 /* ---------- Conexión TikTok ---------- */
 #tiktokCard h2 small{display:block; font-weight:600; color:var(--muted); font-size:13px; margin-top:2px}
-.tt-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
-.tt-row #ttUser{flex:1; min-width:200px; padding:10px 12px; border-radius:10px; border:1px solid var(--card-bd);
+.tt-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.tt-row .tt-btns{display:flex; gap:10px; flex:0 0 auto}
+.tt-row #ttStatus{flex-basis:100%; margin-top:2px}
+.tt-row #ttUser{flex:1; min-width:200px; padding:12px 14px; border-radius:10px; border:1px solid var(--card-bd);
   background:#0e1430; color:var(--txt); font-family:inherit; font-weight:700}
 .tt-status{font-weight:800; color:var(--muted); white-space:nowrap}
 .tt-status.ok{color:var(--ok)} .tt-status.wait{color:var(--gold)} .tt-status.bad{color:#ff5c7a}
@@ -149,6 +151,15 @@ body{
 .dev-tt:hover{transform:translateY(-2px); box-shadow:0 7px 22px rgba(255,45,117,.55)}
 .dev-tt b{color:var(--gold)}
 .dev-tt-ic{font-size:18px}
+
+/* ---------- Menú: separación y aviso de versión ---------- */
+#menu .game-grid{margin-bottom:28px}      /* aire entre los juegos y la conexión */
+#menu #tiktokCard{border-color:#ff5c7a55}
+.notice-card{background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(124,77,255,.10));
+  border:1px solid var(--gold)}
+.notice-list{list-style:none; display:flex; flex-direction:column; gap:9px}
+.notice-list li{position:relative; padding-left:4px; line-height:1.5; font-size:14.5px; color:var(--txt)}
+.notice-list b{color:var(--gold)}
 
 /* ---------- Leyenda de regalos (en el juego) ---------- */
 .gift-legend{position:relative; z-index:3; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
