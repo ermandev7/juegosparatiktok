@@ -25,9 +25,23 @@ if not exist server\node_modules (
   popd
 )
 
-REM ---------- Empaquetar ----------
+REM ---------- 1) Bundle con esbuild ----------
+REM Mete TODA la libreria de TikTok (v2) y sus subrutas de protobuf en UN solo archivo.
+REM Esto es lo que permite que pkg funcione: sin el bundle, pkg no resuelve las subrutas
+REM (@bufbuild/protobuf/wire, tiktok-live-connector/...) y el .exe se cae al arrancar.
+echo [*] Empaquetando dependencias con esbuild...
+call npx --yes esbuild server\bridge.js --bundle --platform=node --target=node22 --outfile=dist\server.cjs --external:bufferutil --external:utf-8-validate
+if errorlevel 1 (
+  echo.
+  echo [X] Fallo el bundle con esbuild.
+  echo.
+  pause
+  exit /b 1
+)
+
+REM ---------- 2) Empaquetar el bundle a .exe ----------
 echo [*] Empaquetando con @yao-pkg/pkg (la 1a vez descarga ~60MB)...
-call npx --yes @yao-pkg/pkg . --fallback-to-source --output dist\CarreraLive.exe
+call npx --yes @yao-pkg/pkg@latest . --output dist\CarreraLive.exe
 if errorlevel 1 (
   echo.
   echo [X] Fallo el empaquetado. Revisa el mensaje de arriba.
