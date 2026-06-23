@@ -1139,6 +1139,7 @@
     a.side = a.side === 'l' ? 'r' : 'l';
     b.side = b.side === 'l' ? 'r' : 'l';
     a.runnerEl.dataset.side = a.side; b.runnerEl.dataset.side = b.side;
+    if (state._field) state._field.classList.toggle('swapped');  // barras + nombres al otro lado
     updateFutbolArena();                 // reposiciona (la transición anima el cruce)
     state._crownSide = '_'; moveArenaCrown();
     spawnCenterBanner('🔄 ¡Cambio de cancha!');
