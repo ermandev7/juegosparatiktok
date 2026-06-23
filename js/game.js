@@ -891,8 +891,8 @@
     flashLegend(g.key);
   }
 
-  /* Llega un COMENTARIO del chat: si contiene la palabra clave de un competidor,
-     le suma puntos y recuerda a quién votó este espectador (para sus likes). */
+  /* Llega un COMENTARIO del chat: si contiene el nombre/palabra de un competidor,
+     GRITA su nombre + lo muestra en grande + anima al público. NO suma puntos. */
   function onComment(c){
     if (!state.running || state.paused || !state.commentsOn) return;
     const text = noAcc(c.comment);
@@ -903,10 +903,9 @@
       const hit = w.includes(' ') ? text.includes(w) : tokens.includes(w);
       if (hit){ entry = e; break; }              // primera palabra clave que aparezca gana
     }
-    if (!entry) return;
-    if (c.uniqueId) state.userLast.set(c.uniqueId, entry.racer);
-    addPoint(entry.racer, state.commentPts);
-    SFX.crowd.bump(0.6);                                       // el público también se anima
+    if (!entry) return;                                       // no menciona a nadie -> nada
+    // NO suma puntos (los puntos SOLO vienen de los regalos): el comentario solo AMBIENTA.
+    SFX.crowd.bump(0.6);                                       // el público se anima
     // ¡grita el nombre del competidor y lo muestra en grande! (con throttle para no saturar)
     const now = performance.now();
     if (!state._lastShout || now - state._lastShout > 1100){
@@ -914,7 +913,6 @@
       spawnNameShout(entry.racer.name, entry.racer.color);
       speakName(entry.racer.name);
     }
-    if (state.commentPts > 0) showActionToast('comment', '💬', c.user, 'comentó', entry.racer, state.commentPts);
   }
 
   /* Texto GIGANTE con el nombre del competidor que sube desde abajo con zoom (al comentar). */
@@ -939,42 +937,22 @@
     } catch(_){}
   }
 
-  /* Llegan LIKES (en lote): se atribuyen a quien este espectador votó por última vez.
-     Se acumulan y cada `likesPer` likes = `likePts` puntos. */
+  /* Llegan LIKES (en lote): SOLO suben el ruido del público (no dan puntos). */
   function onLike(l){
-    if (!state.running || state.paused) return;
-    SFX.crowd.bump(Math.min(3, (l.count || 1) * 0.2));      // gentío: más likes = más fuerte
-    if (!state.likesOn) return;
-    const r = l.uniqueId && state.userLast.get(l.uniqueId);
-    if (!r) return;                              // aún no votó: el like no se atribuye
-    const acc = (state.likeBuf.get(l.uniqueId) || 0) + (l.count || 1);
-    const steps = Math.floor(acc / state.likesPer);
-    state.likeBuf.set(l.uniqueId, acc % state.likesPer);
-    if (steps <= 0) return;
-    const pts = steps * state.likePts;
-    addPoint(r, pts);
-    if (pts > 0) showActionToast('like', '❤️', l.user, `${steps * state.likesPer} likes`, r, pts);
+    if (!state.running || state.paused || !state.likesOn) return;
+    SFX.crowd.bump(Math.min(3, (l.count || 1) * 0.2));      // SOLO ruido: más likes = más fuerte
   }
 
-  /* Llega un SEGUIDOR nuevo: suma puntos a quien este espectador votó por última vez
-     (comentario/regalo). Si nunca votó, se ignora (no sabemos a quién apoya). */
+  /* Llega un SEGUIDOR nuevo: SOLO anima al público (los puntos vienen solo de los regalos). */
   function onFollow(f){
     if (!state.running || state.paused || !state.followOn) return;
-    const r = f.uniqueId && state.userLast.get(f.uniqueId);
-    if (!r || state.followPts <= 0) return;
-    addPoint(r, state.followPts);
-    showActionToast('follow', '➕', f.user, 'siguió', r, state.followPts);
+    SFX.crowd.bump(1.0);                                    // SOLO anima al público, no suma puntos
   }
 
-  /* Llega un COMPARTIR: igual que seguir, se atribuye al último voto del espectador. */
+  /* Llega un COMPARTIR: SOLO anima al público (no suma puntos). */
   function onShare(s){
-    if (!state.running || state.paused) return;
-    SFX.crowd.bump(1.3);                                    // el público reacciona a cada compartido
-    if (!state.shareOn) return;
-    const r = s.uniqueId && state.userLast.get(s.uniqueId);
-    if (!r || state.sharePts <= 0) return;
-    addPoint(r, state.sharePts);
-    showActionToast('share', '🔁', s.user, 'compartió', r, state.sharePts);
+    if (!state.running || state.paused || !state.shareOn) return;
+    SFX.crowd.bump(1.3);                                    // SOLO anima al público, no suma puntos
   }
 
   /* Aviso flotante genérico para comentario / like (reusa el estilo del toast de regalo). */
