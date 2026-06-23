@@ -467,14 +467,14 @@ img.flag-sm{width:24px; height:16px; object-fit:cover; border-radius:3px; border
 .arena .fighter .afoot .score{background:var(--gold); color:#1a1a1a; border-radius:14px; padding:1px 9px; min-width:24px; text-align:center}
 /* ALINEACIÓN: en 2v2/3v3 los jugadores se ponen en formación (columna con leve zig),
    no encimados uno sobre otro. form-1 = un solo jugador (fila). */
-.arena .fighter .ava{display:flex; flex-direction:column; align-items:center; gap:12px}
-.arena .fighter .ava.form-1{flex-direction:row}
+.arena .fighter .ava{display:flex; flex-direction:column; align-items:center; gap:30px}
+.arena .fighter .ava.form-1{flex-direction:row; gap:10px}
 .arena .fighter .amem{display:flex; transition:transform .3s}
-.arena .fighter .ava.form-2 .amem:nth-child(1){transform:translateX(-12px)}
-.arena .fighter .ava.form-2 .amem:nth-child(2){transform:translateX(12px)}
-.arena .fighter .ava.form-3 .amem:nth-child(1){transform:translateX(-14px)}
-.arena .fighter .ava.form-3 .amem:nth-child(2){transform:translateX(14px)}
-.arena .fighter .ava.form-3 .amem:nth-child(3){transform:translateX(-14px)}
+.arena .fighter .ava.form-2 .amem:nth-child(1){transform:translateX(-20px)}
+.arena .fighter .ava.form-2 .amem:nth-child(2){transform:translateX(20px)}
+.arena .fighter .ava.form-3 .amem:nth-child(1){transform:translateX(-22px)}
+.arena .fighter .ava.form-3 .amem:nth-child(2){transform:translateX(22px)}
+.arena .fighter .ava.form-3 .amem:nth-child(3){transform:translateX(-22px)}
 
 /* Cartel central (medio tiempo / avisos) */
 .center-banner{position:absolute; left:50%; top:42%; z-index:9; pointer-events:none; white-space:nowrap;

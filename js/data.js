@@ -120,6 +120,7 @@ const GAMES = {
     id: 'comidas', name: 'Comidas Típicas', emoji: '🍽️',
     scenario: 'cocina', finishLabel: '🏆',
     avatar: 'photo',
+    individualOnly: true,                   // SOLO "todos contra todos" (como Banderas)
     instructions: [
       'Cada plato típico (uno por país de Latinoamérica) es un competidor.',
       'Cada pulsación de su tecla hace avanzar al plato +1.',
@@ -197,6 +198,7 @@ const GAMES = {
     id: 'resistencia', name: 'Carreras de Resistencia', emoji: '🚴',
     scenario: 'ruta', finishLabel: '🏁',
     avatar: 'photo',
+    hidden: true,                           // OCULTO (para una versión más adelante; no se borra)
     instructions: [
       'Compiten las figuras de resistencia (ciclismo y maratón) de Latinoamérica.',
       'Cada pulsación de su tecla lo impulsa +1.',
@@ -235,6 +237,7 @@ const GAMES = {
     id: 'motos', name: 'Carrera de Motos', emoji: '🏍️',
     scenario: 'circuito', finishLabel: '🏁',
     avatar: 'badge',
+    hidden: true,                           // OCULTO (para una versión más adelante; no se borra)
     instructions: [
       'Cada moto compite en el circuito.',
       'Cada pulsación de su tecla acelera la moto +1.',

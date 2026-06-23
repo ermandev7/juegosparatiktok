@@ -404,7 +404,7 @@
   function renderMenu(){
     const grid = $('#gameGrid');
     grid.innerHTML = '';
-    Object.values(GAMES).forEach((g, i) => {
+    Object.values(GAMES).filter(g => !g.hidden).forEach((g, i) => {   // omite los juegos ocultos
       let count = g.categories
         ? Object.values(g.categories).reduce((a,c)=>a+c.competitors.length,0)
         : g.competitors.length;
