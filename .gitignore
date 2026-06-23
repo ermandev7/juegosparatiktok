@@ -1,0 +1,13 @@
+# Node
+server/node_modules/
+node_modules/
+npm-debug.log*
+
+# Build / portable
+dist/
+*.exe
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/

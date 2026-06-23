@@ -1,0 +1,19 @@
+{
+  "name": "carrera-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Carrera Live - juego para TikTok Live. Config de empaquetado a .exe portable con pkg.",
+  "bin": "server/bridge.js",
+  "pkg": {
+    "assets": [
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*"
+    ],
+    "targets": [
+      "node22-win-x64"
+    ],
+    "outputPath": "dist"
+  }
+}

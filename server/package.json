@@ -1,0 +1,15 @@
+{
+  "name": "carrera-live-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Puente TikTok Live -> juego 'Carrera Live'. Sirve el juego y reenvia los regalos por WebSocket.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node bridge.js",
+    "gifts": "node extract_gifts.js"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^2.4.0",
+    "ws": "^8.18.0"
+  }
+}

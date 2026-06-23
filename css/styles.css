@@ -1,0 +1,694 @@
+/* ============================================================
+   STYLES.CSS — UX/UI de la Carrera Live
+   ============================================================ */
+:root{
+  --bg:#0b1020; --bg2:#131a33;
+  --card:rgba(255,255,255,.06); --card-bd:rgba(255,255,255,.12);
+  --txt:#eaf0ff; --muted:#9fb0d6;
+  --accent:#ff2d75; --accent2:#7c4dff; --ok:#06d6a0; --gold:#ffd166;
+  --lane-h: 74px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{
+  font-family:'Outfit',system-ui,sans-serif;
+  background:radial-gradient(1200px 800px at 80% -10%, #1b2550 0%, transparent 60%),
+             radial-gradient(900px 700px at -10% 110%, #2a1240 0%, transparent 55%),
+             var(--bg);
+  color:var(--txt); overflow-x:hidden;
+}
+
+/* ---------- pantallas ---------- */
+.screen{display:none; min-height:100vh}
+.screen.active{display:block}
+#game.active,#winScreen.active{display:block}
+
+/* ---------- botones ---------- */
+.btn{
+  font-family:inherit; font-weight:800; cursor:pointer; border:none; color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  padding:12px 22px; border-radius:14px; font-size:16px;
+  box-shadow:0 8px 24px rgba(124,77,255,.35); transition:transform .12s ease, filter .12s;
+}
+.btn:hover{transform:translateY(-2px); filter:brightness(1.08)}
+.btn:active{transform:translateY(0)}
+.btn.big{width:100%; padding:18px; font-size:20px; margin-top:8px}
+.btn.ghost{background:transparent; border:2px solid var(--card-bd); box-shadow:none}
+.btn.mini{padding:8px 12px; font-size:14px; border-radius:10px}
+
+/* ============================================================
+   SETUP
+   ============================================================ */
+.setup-wrap{max-width:920px; margin:0 auto; padding:28px 18px 60px}
+.brand{text-align:center; margin-bottom:22px}
+.brand h1{font-size:clamp(32px,6vw,52px); font-weight:900; letter-spacing:-1px}
+.brand h1 span{background:linear-gradient(90deg,var(--accent),var(--gold));
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+.brand p{color:var(--muted); margin-top:6px}
+
+.card{
+  background:var(--card); border:1px solid var(--card-bd); backdrop-filter:blur(10px);
+  border-radius:20px; padding:20px; margin-bottom:18px;
+}
+.card h2{font-size:18px; margin-bottom:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.card h2 small{font-weight:400; color:var(--muted); font-size:12px; flex-basis:100%}
+
+/* grid de temas */
+.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px}
+.theme-card{
+  border:2px solid var(--card-bd); border-radius:16px; padding:18px 10px; text-align:center;
+  cursor:pointer; transition:.18s; background:rgba(255,255,255,.03);
+}
+.theme-card:hover{transform:translateY(-3px); border-color:var(--accent2)}
+.theme-card.sel{border-color:var(--accent); background:rgba(255,45,117,.12); box-shadow:0 0 0 3px rgba(255,45,117,.25)}
+.theme-card .em{font-size:38px; display:block}
+.theme-card .nm{font-weight:800; margin-top:6px}
+.theme-card .ct{color:var(--muted); font-size:12px}
+
+/* condición de victoria */
+.mode-row{display:flex; flex-direction:column; gap:12px}
+.radio{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-weight:600}
+.radio input[type=number]{width:90px; padding:8px; border-radius:10px; border:1px solid var(--card-bd);
+  background:#0e1430; color:var(--txt); font-family:inherit; font-weight:700; text-align:center}
+.radio input[type=radio]{width:18px; height:18px; accent-color:var(--accent)}
+/* presets de duración (modo por tiempo) */
+.time-presets{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-weight:600;
+  margin:-2px 0 2px 28px; padding-left:10px; border-left:2px solid var(--card-bd)}
+.time-presets .custom-secs{color:var(--muted)}
+.time-presets input[type=number]{width:80px; padding:8px; border-radius:10px; border:1px solid var(--card-bd);
+  background:#0e1430; color:var(--txt); font-family:inherit; font-weight:700; text-align:center}
+.time-preset{padding:6px 12px}
+.time-preset.on{background:var(--gold); color:#1a1a1a; border-color:var(--gold); font-weight:900}
+
+/* roster */
+.roster-tools{display:flex; gap:8px; margin-bottom:12px}
+.roster{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:10px}
+.player-row{
+  display:flex; align-items:center; gap:8px; padding:10px 12px;
+  border:1px solid var(--card-bd); border-radius:14px; background:rgba(255,255,255,.03);
+  transition:.15s;
+}
+.player-row.off{opacity:.4}
+.player-row .pcheck{width:20px; height:20px; accent-color:var(--ok)}
+.player-row .picon{font-size:26px}
+.player-row .pinfo{flex:1; min-width:0}
+.player-row .pname{font-weight:800; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.player-row .psub{color:var(--muted); font-size:12px}
+.player-row .pkey{
+  width:56px; padding:8px 4px; text-align:center; font-weight:900; text-transform:uppercase;
+  border-radius:10px; border:2px solid var(--accent2); background:#0e1430; color:var(--gold);
+  font-family:inherit; cursor:pointer;
+}
+.player-row .pkey.listening{border-color:var(--gold); animation:pulse .8s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px rgba(255,209,102,.3)}}
+.player-row .pgift{padding:7px 4px; border-radius:10px; border:2px solid var(--accent);
+  background:#0e1430; color:var(--txt); font-family:inherit; font-weight:700; max-width:104px; cursor:pointer}
+.player-row .pword{width:56px; padding:8px 4px; text-align:center; border-radius:10px;
+  border:2px solid #5b8cff; background:#0e1430; color:#bcd0ff; font-family:inherit; font-weight:800; min-width:0}
+.player-row .pgiftpts{width:46px; padding:8px 2px; text-align:center; border-radius:10px;
+  border:2px solid var(--accent); background:#0e1430; color:var(--gold); font-family:inherit; font-weight:800; min-width:0}
+
+/* ---------- Conexión TikTok ---------- */
+#tiktokCard h2 small{display:block; font-weight:600; color:var(--muted); font-size:13px; margin-top:2px}
+.tt-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.tt-row #ttUser{flex:1; min-width:200px; padding:10px 12px; border-radius:10px; border:1px solid var(--card-bd);
+  background:#0e1430; color:var(--txt); font-family:inherit; font-weight:700}
+.tt-status{font-weight:800; color:var(--muted); white-space:nowrap}
+.tt-status.ok{color:var(--ok)} .tt-status.wait{color:var(--gold)} .tt-status.bad{color:#ff5c7a}
+.tt-help{margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.5}
+.tt-help code{background:#0e1430; border:1px solid var(--card-bd); border-radius:6px; padding:1px 6px; color:var(--gold); font-weight:700}
+/* comentarios / likes */
+.tt-actions{display:flex; flex-direction:column; gap:8px; margin-top:12px}
+.tt-act{display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border-radius:12px;
+  border:1px solid var(--card-bd); background:rgba(255,255,255,.03); font-weight:700; font-size:14px}
+.tt-act input[type=checkbox]{width:20px; height:20px; margin-top:1px; accent-color:var(--ok); flex:0 0 auto}
+.tt-act input[type=number]{width:60px; padding:5px 6px; border-radius:8px; border:2px solid var(--accent2);
+  background:#0e1430; color:var(--gold); font-family:inherit; font-weight:800; text-align:center}
+.tt-act small{display:block; color:var(--muted); font-weight:600; font-size:12px; margin-top:3px}
+/* desplegable de puntos por acción (compacto en el menú) */
+.tt-more{margin-top:12px}
+.tt-more>summary{cursor:pointer; font-weight:800; color:var(--gold); list-style:none; padding:6px 0; user-select:none}
+.tt-more>summary::-webkit-details-marker{display:none}
+.tt-more>summary::before{content:'▸ '; color:var(--accent2)}
+.tt-more[open]>summary::before{content:'▾ '}
+
+/* ---------- Tarjeta de perfil del desarrollador ---------- */
+.dev-card{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(124,77,255,.18),rgba(255,45,117,.14));
+  border:1px solid var(--accent2)}
+.dev-info{display:flex; align-items:center; gap:14px; min-width:0}
+.dev-ava{font-size:40px; line-height:1; filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+.dev-name{font-weight:900; font-size:17px}
+.dev-name b{color:var(--gold)}
+.dev-sub{color:var(--muted); font-weight:600; font-size:13.5px; margin-top:2px}
+.dev-tt{display:inline-flex; align-items:center; gap:9px; text-decoration:none; white-space:nowrap;
+  font-weight:800; font-size:15px; color:#fff; padding:11px 18px; border-radius:30px;
+  background:linear-gradient(135deg,#ff2d75,#7c4dff); box-shadow:0 4px 16px rgba(124,77,255,.45);
+  transition:transform .15s, box-shadow .15s}
+.dev-tt:hover{transform:translateY(-2px); box-shadow:0 7px 22px rgba(255,45,117,.55)}
+.dev-tt b{color:var(--gold)}
+.dev-tt-ic{font-size:18px}
+
+/* ---------- Leyenda de regalos (en el juego) ---------- */
+.gift-legend{position:relative; z-index:3; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  justify-content:center; padding:10px 14px; margin:2px 8px 8px; border-radius:14px;
+  background:rgba(8,12,28,.6); border:1px solid var(--card-bd); backdrop-filter:blur(6px)}
+.gift-legend.duel{gap:18px}
+.gl-title{font-weight:900; color:var(--gold); letter-spacing:.5px; margin-right:4px}
+/* un lado (competidor) con sus regalos */
+.gl-side{display:inline-flex; align-items:center; gap:8px; font-weight:800; font-size:15px;
+  padding:7px 13px; border-radius:26px; background:rgba(8,12,28,.7); border:2px solid var(--c,#ffd166)}
+.gl-side .gl-ar{color:var(--muted)}
+.gl-side .gl-nm{max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--c,#ffd166)}
+/* un regalo: foto + valor */
+.gl-gift{display:inline-flex; align-items:center; gap:5px}
+.gl-photo{width:52px; height:52px; object-fit:contain; border-radius:11px; background:rgba(255,255,255,.14);
+  padding:3px; box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.gl-photo.as-em{font-size:40px; align-items:center; justify-content:center; background:none; box-shadow:none}
+.gl-gift .gl-pt{background:var(--c,#ffd166); color:#1a1a1a; border-radius:12px; padding:1px 8px; font-weight:900; font-size:13px}
+.gl-word{display:inline-flex; align-items:center; gap:5px; background:rgba(91,140,255,.16);
+  border:1.5px solid #5b8cff; color:#bcd0ff; border-radius:14px; padding:3px 11px; font-weight:800; font-size:14px}
+.gl-word b{color:#fff}
+.gl-vsx{font-weight:900; font-size:18px; color:var(--gold); letter-spacing:1px;
+  text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.gl-gift.pulse{animation:giftPulse .6s ease}
+@keyframes giftPulse{0%{transform:scale(1)}40%{transform:scale(1.28); filter:drop-shadow(0 0 10px var(--c,#ffd166))}100%{transform:scale(1)}}
+
+/* ---------- Aviso flotante de regalo ---------- */
+.gift-toast{position:absolute; left:50%; top:84px; z-index:9; transform:translateX(-50%);
+  display:flex; align-items:center; gap:10px; max-width:90%;
+  background:rgba(8,12,28,.92); border:2px solid var(--gold); border-radius:30px; padding:8px 16px;
+  box-shadow:0 8px 22px rgba(0,0,0,.5); animation:toastIn .3s ease, toastOut .4s ease 2.8s forwards}
+.gift-toast .gt-photo{width:30px; height:30px; object-fit:contain; border-radius:8px}
+.gift-toast .gt-photo.as-em{font-size:26px; display:inline-flex; align-items:center; justify-content:center}
+.gift-toast .gt-tx{font-weight:700; font-size:14px; white-space:nowrap}
+.gift-toast .gt-to{margin-left:6px; color:var(--gold); font-weight:900}
+.gift-toast.act-comment{border-color:#5b8cff}
+.gift-toast.act-comment .gt-to{color:#7fa6ff}
+.gift-toast.act-like{border-color:#ff5c7a}
+.gift-toast.act-like .gt-to{color:#ff8aa0}
+.gift-toast.act-follow{border-color:#06d6a0}
+.gift-toast.act-follow .gt-to{color:#46e3bb}
+.gift-toast.act-share{border-color:#ffd166}
+.gift-toast.act-share .gt-to{color:#ffe09a}
+@keyframes toastIn{from{opacity:0; transform:translate(-50%,-12px)}to{opacity:1; transform:translate(-50%,0)}}
+@keyframes toastOut{to{opacity:0; transform:translate(-50%,-12px)}}
+
+/* ============================================================
+   JUEGO / ESCENARIOS
+   ============================================================ */
+.scene{min-height:100vh; padding:0; position:relative; transition:background .4s}
+/* Escenario base: vignette suave para dar profundidad (oscurece bordes) */
+.scene::before{content:''; position:absolute; inset:0; z-index:0; pointer-events:none; transition:.4s;
+  background:radial-gradient(130% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.45) 100%)}
+/* Capa atmosférica por tema (luz cenital, graderías, texturas). Detrás de la pista. */
+.scene::after{content:''; position:absolute; inset:0; z-index:0; pointer-events:none; transition:.4s}
+
+.scene.pista{background:linear-gradient(180deg,#b5451f,#3a1408)}      /* atletismo */
+.scene.cancha{background:linear-gradient(180deg,#0a7a3b,#063d20)}     /* fútbol */
+.scene.circuito{background:linear-gradient(180deg,#2b2b33,#0b0b12)}   /* motos */
+.scene.cocina{background:linear-gradient(180deg,#7a3b0a,#2a1404)}     /* comidas */
+.scene.ring{background:linear-gradient(180deg,#7a1224,#1c0509)}       /* boxeo */
+.scene.ruta{background:linear-gradient(180deg,#52606e,#171f27)}       /* resistencia */
+
+/* ===== AMBIENTE POR ESCENA (capa ::after, decorativa, detrás de la pista) ===== */
+/* Graderías de público: banda de "cabezas" tenues arriba (silueta repetida) */
+.scene.cancha::after, .scene.pista::after, .scene.ruta::after{
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255,255,255,.10) 0 6px, transparent 7px) 0 0/22px 18px repeat-x,
+    radial-gradient(120% 70% at 50% -8%, rgba(255,255,255,.16), transparent 60%);
+  background-position:0 26px, 0 0; opacity:.7}
+/* Fútbol: foco verde-blanco de estadio + césped luminoso al fondo */
+.scene.cancha::after{background:
+  radial-gradient(circle at 50% 100%, rgba(255,255,255,.12) 0 6px, transparent 7px) 0 26px/22px 18px repeat-x,
+  radial-gradient(120% 70% at 50% -6%, rgba(190,255,210,.20), transparent 62%)}
+/* Boxeo: reflector cenital sobre el ring, resto en penumbra */
+.scene.ring::after{background:
+  radial-gradient(60% 55% at 50% -5%, rgba(255,235,190,.30), rgba(255,235,190,.05) 45%, transparent 65%);
+  opacity:.85}
+/* Motos: cielo nocturno + brillo de pista y líneas de velocidad tenues */
+.scene.circuito::after{background:
+  repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, transparent 2px 90px),
+  radial-gradient(120% 60% at 50% -10%, rgba(120,160,255,.18), transparent 60%);
+  opacity:.8}
+/* Cocina: campana de luz cálida cenital (foco de concurso) + azulejos al fondo */
+.scene.cocina::after{background:
+  repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 54px),
+  repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 54px),
+  radial-gradient(90% 60% at 50% -8%, rgba(255,220,150,.26), transparent 60%);
+  opacity:.7}
+
+/* HUD */
+.hud{position:sticky; top:0; z-index:5; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px;
+  padding:10px 16px; backdrop-filter:blur(8px); background:rgba(8,12,28,.55); border-bottom:1px solid var(--card-bd)}
+.hud-left{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0}
+.hud-center{display:flex; justify-content:center}
+.hud-theme{font-weight:800; white-space:nowrap}
+/* reloj / meta GRANDE y centrado */
+.hud-goal{font-weight:900; color:var(--gold); font-size:clamp(38px,6.5vw,68px); line-height:1; letter-spacing:1px;
+  white-space:nowrap; padding:6px 26px; border:3px solid var(--gold); border-radius:18px;
+  background:rgba(8,12,28,.55); box-shadow:0 0 22px rgba(255,209,102,.35), inset 0 0 14px rgba(255,209,102,.12);
+  text-shadow:0 2px 12px rgba(0,0,0,.6); font-variant-numeric:tabular-nums}
+.hud-goal.warn{color:#fff; border-color:#ff2d75; background:rgba(255,45,117,.25); animation:timewarn .6s ease-in-out infinite}
+@keyframes timewarn{50%{transform:scale(1.08); box-shadow:0 0 18px rgba(255,45,117,.7)}}
+.hud-right{display:flex; align-items:center; justify-content:flex-end; gap:8px}
+.leader-box{display:flex; align-items:center; gap:8px; font-weight:900;
+  background:linear-gradient(135deg,rgba(255,209,102,.2),rgba(255,45,117,.15));
+  border:1px solid var(--gold); padding:6px 14px; border-radius:30px}
+.leader-box .crown{font-size:18px}
+.leader-score{background:var(--gold); color:#222; border-radius:20px; padding:2px 10px; font-size:14px}
+/* en versus mostramos los dos nombres + corona en la cancha, no el líder único del HUD */
+.scene.arena-mode .leader-box{display:none}
+
+/* Pista */
+.track{position:relative; z-index:2; padding:14px; display:flex; flex-direction:column; gap:8px}
+
+.lane{
+  display:flex; align-items:stretch; height:var(--lane-h);
+  border-radius:14px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.14); box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+
+/* columna de info fija (izquierda) */
+.lane .info{
+  flex:0 0 175px; display:flex; align-items:center; gap:8px; padding:6px 10px;
+  background:rgba(8,12,28,.62); border-right:2px solid rgba(255,255,255,.14);
+}
+.lane .info .key{font-weight:900; background:#0e1430; color:var(--gold);
+  border:2px solid var(--accent2); border-radius:8px; padding:3px 7px; font-size:12px;
+  text-transform:uppercase; min-width:30px; text-align:center}
+.lane .info .ava{display:flex; align-items:center; justify-content:center; width:30px}
+.lane .info .meta{flex:1; min-width:0}
+.lane .info .nm{font-weight:800; font-size:13px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.lane .info .sub{font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.lane .info .score{font-weight:900; background:var(--gold); color:#1a1a1a;
+  border-radius:20px; padding:2px 9px; font-size:13px; min-width:26px; text-align:center}
+/* regalo asignado, mostrado EN el carril (foto + valor) */
+.lane .info .lane-gift{display:flex; align-items:center; gap:3px; flex:0 0 auto}
+.lane .info .lg-one{display:inline-flex; align-items:center; gap:3px}
+.lane .info .lg-photo{width:42px; height:42px; object-fit:contain; border-radius:9px;
+  background:rgba(255,255,255,.14); padding:2px; box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.lane .info .lg-photo.as-em{font-size:30px; align-items:center; justify-content:center; background:none; box-shadow:none}
+.lane .info .lg-pt{background:var(--c,var(--gold)); color:#1a1a1a; border-radius:10px;
+  padding:0 6px; font-size:11px; font-weight:900}
+.lane .info .lg-one.pulse{animation:giftPulse .6s ease}
+.track.t-sm .info .lg-pt{display:none}            /* con muchos: solo la foto, ahorra espacio */
+.track.t-sm .info .lg-photo{width:34px; height:34px}
+/* palabra clave de chat, mostrada EN el carril */
+.lane .info .lane-word{display:inline-flex; align-items:center; gap:4px; flex:0 0 auto;
+  background:rgba(91,140,255,.16); border:1.5px solid #5b8cff; color:#bcd0ff;
+  border-radius:10px; padding:1px 8px; font-size:12px; font-weight:700; white-space:nowrap}
+.lane .info .lane-word b{color:#fff}
+.track.t-sm .info .lane-word{font-size:11px; padding:1px 6px}
+
+/* franja de carrera (derecha) */
+.lane .strip{
+  position:relative; flex:1; overflow:hidden;
+  background:repeating-linear-gradient(90deg,var(--lane-a) 0 38px,var(--lane-b) 38px 76px);
+}
+/* línea de meta a la derecha */
+.lane .strip::after{content:''; position:absolute; right:0; top:0; bottom:0; width:12px;
+  background:repeating-linear-gradient(45deg,#fff 0 6px,#111 6px 12px); opacity:.9; z-index:3}
+/* barra de progreso (se llena con los puntos, relativa al líder) */
+.lane .strip .pfill{position:absolute; left:0; top:0; bottom:0; width:0; z-index:1; pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,209,102,.10),rgba(255,209,102,.42));
+  border-right:2px solid rgba(255,209,102,.85); box-shadow:0 0 12px rgba(255,209,102,.35);
+  transition:width .25s cubic-bezier(.22,1,.36,1)}
+
+/* ===== PISTAS TEMÁTICAS (carreras en línea recta hacia la meta) ===== */
+/* 🚴 RESISTENCIA: pista de atletismo (tartán rojo con líneas de carril blancas) */
+.scene.ruta .lane .strip{background:linear-gradient(180deg,#c0392b,#a5302a);
+  border-top:3px solid rgba(255,255,255,.55); border-bottom:3px solid rgba(255,255,255,.2)}
+/* 🏍️ MOTOS: circuito de tierra con SALTOS (rampas) + la moto brinca */
+.scene.circuito .lane .strip{background:
+  linear-gradient(135deg,transparent 60%,rgba(0,0,0,.55) 60% 72%,transparent 72%) 0 100%/72px 30px repeat-x,
+  linear-gradient(180deg,#6b4a2a 0,#3a2a18 55%,#241a10 100%)}
+.scene.circuito .runner{animation:motohop 1.1s ease-in-out infinite; animation-delay:var(--delay,0s)}
+@keyframes motohop{0%,100%{transform:translate(-50%,-50%)}45%{transform:translate(-50%,-82%)}}
+/* 🍽️ COMIDAS: encimera de cocina (azulejos) */
+.scene.cocina .lane .strip{background:
+  repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 2px,transparent 2px 46px),
+  repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 2px,transparent 2px 46px),
+  linear-gradient(180deg,#cf7b33,#9a531c)}
+
+/* corredor */
+.runner{
+  position:absolute; top:50%; left:0; transform:translate(-50%,-50%);
+  z-index:4; display:flex; flex-direction:column; align-items:center; gap:1px;
+  transition:left .25s cubic-bezier(.22,1,.36,1);
+}
+.runner .ava{line-height:1; filter:drop-shadow(0 4px 6px rgba(0,0,0,.55))}
+/* tamaño del corredor según el nivel (.track.t-*) */
+.runner .ava .emoji{font-size:var(--rfs,34px)}
+.runner .ava img.flag{width:var(--rav,40px); height:calc(var(--rav,40px)*.66); object-fit:cover; border-radius:4px;
+  border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.runner .ava .badge{width:var(--rav,40px); height:var(--rav,40px); font-size:calc(var(--rav,40px)*.32)}
+.runner .ava .photo{width:var(--rav,54px); height:var(--rav,54px)}
+.runner .ava .ava-photo{display:inline-flex}
+.runner.bump .ava{animation:bump .28s}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.45) translateY(-6px)}100%{transform:scale(1)}}
+.runner.leader .ava{filter:drop-shadow(0 0 9px var(--gold)) drop-shadow(0 4px 6px #0008)}
+
+/* banderas pequeñas en la columna de info / roster / podio */
+img.flag-sm{width:24px; height:16px; object-fit:cover; border-radius:3px; border:1px solid rgba(255,255,255,.5); vertical-align:middle}
+
+/* ============================================================
+   ARENA (duelo 1v1 / equipos): cancha con arcos o ring de boxeo
+   ============================================================ */
+.track.arena{--rav:84px; --rfs:66px; display:block; padding:18px}
+.arena-field{position:relative; height:64vh; min-height:380px; border-radius:18px; overflow:hidden;
+  border:3px solid rgba(255,255,255,.28); box-shadow:inset 0 0 70px rgba(0,0,0,.45)}
+
+/* ⚽ FÚTBOL: césped + línea y círculo centrales (cara a cara, sí es cancha) */
+.arena-cancha .arena-field{background:linear-gradient(90deg,rgba(255,255,255,.05) 0 25%,rgba(0,0,0,.05) 25% 50%,rgba(255,255,255,.05) 50% 75%,rgba(0,0,0,.05) 75%)}
+.arena-cancha .arena-field::before{content:''; position:absolute; left:50%; top:0; bottom:0; width:3px;
+  background:rgba(255,255,255,.5); transform:translateX(-50%)}
+.arena-cancha .arena-field::after{content:''; position:absolute; left:50%; top:50%; width:140px; height:140px;
+  border:3px solid rgba(255,255,255,.5); border-radius:50%; transform:translate(-50%,-50%)}
+.goal{position:absolute; top:50%; transform:translateY(-50%); font-size:60px; z-index:1; opacity:.9;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+.goal-l{left:6px} .goal-r{right:6px; transform:translateY(-50%) scaleX(-1)}
+
+/* --- ring de boxeo --- */
+.arena-ring .arena-field{background:repeating-linear-gradient(45deg,#8a1a2e 0 26px,#7a1224 26px 52px);
+  box-shadow:inset 0 0 0 5px #c9a227, inset 0 14px 0 -8px #e0e0e0, inset 0 -14px 0 -8px #e0e0e0, inset 0 0 70px rgba(0,0,0,.45)}
+.corner{position:absolute; top:8px; font-size:40px; z-index:1; filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+.corner-l{left:10px} .corner-r{right:10px}
+
+/* centro: VS + balón/cinturón */
+.arena-center{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; text-align:center; pointer-events:none}
+.arena-center .vs{font-weight:900; font-size:26px; letter-spacing:2px; color:var(--gold);
+  text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.arena-center .arena-ball{font-size:38px; animation:floaty 2.2s ease-in-out infinite}
+
+/* nombres de los jugadores arriba, cada uno en su lado (versus) */
+.vs-names{position:absolute; top:8px; left:12px; right:12px; z-index:5;
+  display:flex; justify-content:space-between; align-items:flex-start; gap:50px; pointer-events:none}
+.vs-name{display:flex; align-items:center; gap:8px; font-weight:900; font-size:clamp(14px,2.1vw,20px);
+  background:rgba(8,12,28,.75); border:2px solid var(--c,#ffd166); border-radius:14px; padding:5px 12px;
+  max-width:44%; box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.vs-name .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.vs-name .sc{background:var(--c,#ffd166); color:#1a1a1a; border-radius:12px; padding:1px 9px;
+  min-width:26px; text-align:center; font-variant-numeric:tabular-nums}
+
+/* corona que se desliza al lado del que va ganando, con salto */
+.vs-crown{position:absolute; top:-4px; left:50%; z-index:6; font-size:clamp(24px,3.4vw,36px);
+  transform:translateX(-50%) scale(0); opacity:0; pointer-events:none;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.6));
+  transition:left .55s cubic-bezier(.34,1.56,.64,1), transform .35s ease, opacity .3s ease}
+.vs-crown.show{transform:translateX(-50%) scale(1); opacity:1}
+.arena-field.lead-l .vs-crown{left:13%}
+.arena-field.lead-r .vs-crown{left:87%}
+.vs-crown.hop{animation:crownHop .6s ease}
+@keyframes crownHop{
+  0%{transform:translateX(-50%) scale(1)}
+  35%{transform:translateX(-50%) translateY(-16px) scale(1.35) rotate(-14deg)}
+  65%{transform:translateX(-50%) translateY(-3px) scale(1.12) rotate(10deg)}
+  100%{transform:translateX(-50%) scale(1)}}
+
+/* barras de progreso por lado (duelo): se llenan con los puntos */
+.aprog{position:absolute; top:46px; height:11px; z-index:3; width:calc(50% - 20px);
+  background:rgba(8,12,28,.55); border:1px solid rgba(255,255,255,.22); border-radius:8px; overflow:hidden}
+.aprog-l{left:12px} .aprog-r{right:12px}
+.aprog i{position:absolute; top:0; bottom:0; width:0; display:block;
+  background:linear-gradient(90deg,var(--c,#ffd166),#fff); box-shadow:0 0 12px var(--c,#ffd166);
+  transition:width .25s cubic-bezier(.22,1,.36,1)}
+.aprog-l i{left:0; right:auto} .aprog-r i{right:0; left:auto}
+
+/* contendientes */
+.arena .fighter{position:absolute; top:50%; z-index:4; transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  transition:left .25s cubic-bezier(.22,1,.36,1), right .25s cubic-bezier(.22,1,.36,1)}
+.arena .fighter.f-r{transform:translate(50%,-50%)}
+.arena .fighter .afoot{display:flex; align-items:center; gap:6px; font-weight:800; font-size:13px;
+  background:rgba(8,12,28,.72); border:1px solid var(--card-bd); padding:4px 9px; border-radius:22px; white-space:nowrap}
+.arena .fighter .afoot .key{color:var(--gold); border:1px solid var(--accent2); border-radius:6px; padding:1px 6px; font-size:11px; text-transform:uppercase}
+.arena .fighter .afoot .nm{max-width:160px; overflow:hidden; text-overflow:ellipsis}
+.arena .fighter .afoot .score{background:var(--gold); color:#1a1a1a; border-radius:14px; padding:1px 9px; min-width:24px; text-align:center}
+.arena .fighter .ava{display:flex; gap:4px}
+
+/* --- arena dinámica (fútbol/comidas/resistencia/motos): vaivén en eses + objeto central que viaja con el dominador --- */
+/* ambos se posicionan por 'left' y se centran igual (no por 'right') */
+.arena-dyn .fighter{transition:left 1.1s cubic-bezier(.4,0,.2,1)}
+.arena-dyn .fighter.f-l{transform:translate(-50%,-50%); animation:futZigL 6.5s ease-in-out infinite}
+.arena-dyn .fighter.f-r{transform:translate(-50%,-50%); animation:futZigR 7.3s ease-in-out infinite}
+/* oscilación suave (vertical + leve deriva horizontal), desincronizada entre lados */
+@keyframes futZigL{0%{top:40%;margin-left:-9px}25%{top:58%;margin-left:7px}50%{top:46%;margin-left:11px}75%{top:60%;margin-left:-3px}100%{top:40%;margin-left:-9px}}
+@keyframes futZigR{0%{top:59%;margin-left:8px}25%{top:42%;margin-left:-7px}50%{top:55%;margin-left:-11px}75%{top:41%;margin-left:5px}100%{top:59%;margin-left:8px}}
+/* balón: posicionado por JS cada frame (va pegado al líder); flota con un bob suave */
+.arena-dyn .arena-ball{position:absolute; top:50%; left:50%; z-index:3; font-size:44px;
+  transform:translate(-50%,-50%); pointer-events:none;
+  animation:ballRoll 1.3s ease-in-out infinite;
+  filter:drop-shadow(0 7px 6px rgba(0,0,0,.5))}
+@keyframes ballRoll{0%,100%{margin-top:-7px}50%{margin-top:5px}}
+/* cambio de líder: giro + rebote pronunciado + estela dorada */
+.arena-dyn .arena-ball.switching{animation:ballDash .4s ease-out, ballRoll 1.3s ease-in-out infinite;
+  filter:drop-shadow(0 0 14px var(--gold)) drop-shadow(0 7px 6px rgba(0,0,0,.5))}
+@keyframes ballDash{
+  0%{transform:translate(-50%,-50%) scale(1) rotate(0)}
+  45%{transform:translate(-50%,-50%) scale(1.6) rotate(260deg)}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(540deg)}}
+
+/* --- efectos de pelea (boxeo) --- */
+/* destello de choque en el punto de encuentro */
+.clash{position:absolute; top:50%; transform:translate(-50%,-50%); z-index:3; width:110px; height:110px;
+  border-radius:50%; pointer-events:none; opacity:0; transition:opacity .2s;
+  background:radial-gradient(circle, rgba(255,209,102,.55), rgba(255,45,117,.25) 45%, transparent 70%)}
+.clash.on{opacity:1; animation:clashpulse .4s ease-in-out infinite}
+@keyframes clashpulse{50%{transform:translate(-50%,-50%) scale(1.35)}}
+
+/* cuando están cerca: los boxeadores tiran jabs hacia el centro */
+.arena-ring .arena-field.clashing .fighter.f-l{animation:jabL .34s ease-in-out infinite}
+.arena-ring .arena-field.clashing .fighter.f-r{animation:jabR .34s ease-in-out infinite}
+@keyframes jabL{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-26%,-50%)}}
+@keyframes jabR{0%,100%{transform:translate(50%,-50%)}50%{transform:translate(26%,-50%)}}
+
+/* sacudida del ring en cada golpe */
+.arena-ring .arena-field.hit{animation:ringshake .22s ease-out}
+@keyframes ringshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-5px,2px)}40%{transform:translate(5px,-2px)}60%{transform:translate(-3px,1px)}80%{transform:translate(3px,-1px)}}
+
+/* golpes voladores (💥 POW! BAM!) */
+.punch{position:absolute; z-index:6; pointer-events:none; font-weight:900; font-size:30px; color:#fff;
+  text-shadow:0 0 8px var(--accent2), 2px 2px 0 #000, -1px -1px 0 #000;
+  animation:punchpop .65s ease-out forwards; will-change:transform,opacity}
+@keyframes punchpop{
+  0%  {opacity:0; transform:translate(-50%,-50%) scale(.3)  rotate(var(--rot,0))}
+  30% {opacity:1; transform:translate(-50%,-50%) scale(1.35) rotate(var(--rot,0))}
+  100%{opacity:0; transform:translate(-50%,-120%) scale(1)   rotate(var(--rot,0))}}
+
+/* ============================================================
+   GANADOR
+   ============================================================ */
+#winScreen{position:relative; display:none}
+#winScreen.active{display:flex; align-items:center; justify-content:center; min-height:100vh}
+#confetti{position:fixed; inset:0; z-index:1; pointer-events:none}
+.win-card{position:relative; z-index:2; text-align:center; background:var(--card); border:1px solid var(--gold);
+  backdrop-filter:blur(12px); border-radius:26px; padding:34px 40px; max-width:440px; width:92%;
+  box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.win-card:has(.faceoff:not([hidden])){max-width:520px}
+.win-medal{font-size:46px; animation:floaty 2s ease-in-out infinite}
+@keyframes floaty{50%{transform:translateY(-8px)}}
+.win-card h2{font-size:26px; letter-spacing:2px; color:var(--gold); margin:4px 0 10px}
+.win-icon{font-size:82px; animation:pop .5s}
+.win-icon img.flag-xl{width:120px; height:80px; object-fit:cover; border-radius:8px; border:3px solid #fff; box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.podium .p b img.flag-sm{width:22px; height:15px}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.win-name{font-size:30px; font-weight:900; margin-top:6px}
+.win-sub{color:var(--muted); font-size:16px}
+.win-score{display:inline-block; margin-top:10px; background:var(--gold); color:#222; font-weight:900;
+  padding:6px 18px; border-radius:30px}
+.podium{display:flex; justify-content:center; gap:8px; margin:18px 0 6px; flex-wrap:wrap}
+.podium .p{background:rgba(255,255,255,.06); border:1px solid var(--card-bd); border-radius:12px; padding:8px 12px; font-size:13px}
+.podium .p b{display:block; font-size:18px}
+/* ---------- cara a cara: ganador vs perdedor ---------- */
+.faceoff{display:flex; align-items:center; justify-content:center; gap:10px; margin:14px 0 12px; flex-wrap:nowrap}
+.fo{display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0; flex:1 1 0}
+.fo-photo{position:relative; display:inline-flex; gap:4px}
+.fo-photo .photo{width:118px; height:118px}
+.fo-photo img.flag-xl{width:104px; height:70px}
+.fo-name{max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.fo-vs{font-weight:900; font-size:30px; color:#fff; opacity:.65; text-shadow:0 2px 6px #000}
+.fo-tag{font-weight:900; letter-spacing:1px; padding:3px 14px; border-radius:20px; font-size:14px}
+.tag-win{background:var(--gold); color:#1a1a1a}
+.tag-lose{background:#3a3a44; color:#cfcfd6}
+.tag-tie{background:var(--accent2); color:#fff}
+.fo-name{font-weight:800; font-size:18px}
+.fo-pts{font-weight:900; font-size:24px; color:var(--gold); line-height:1}
+.fo-pts small{font-size:12px; color:var(--muted); font-weight:700}
+.fo-crown{position:absolute; top:-30px; left:50%; transform:translateX(-50%); font-size:34px;
+  filter:drop-shadow(0 2px 4px #0008); animation:floaty 2s ease-in-out infinite}
+
+/* ganador: rebote + brillo dorado */
+.fo-photo.winner{animation:winPop .6s cubic-bezier(.22,1,.36,1) both}
+.fo-photo.winner .photo, .fo-photo.winner .badge, .fo-photo.winner img.flag-xl{
+  border-color:var(--gold) !important; box-shadow:0 0 22px var(--gold); animation:winGlow 1.6s ease-in-out .6s infinite}
+@keyframes winPop{0%{transform:scale(0) rotate(-18deg)}70%{transform:scale(1.15)}100%{transform:scale(1) rotate(0)}}
+@keyframes winGlow{50%{box-shadow:0 0 34px var(--gold)}}
+
+/* perdedor: blanco y negro, inclinado, agrietado + sacudida de KO */
+.fo-photo.broken{animation:koShake .55s ease-out both}
+.fo-photo.broken .photo, .fo-photo.broken .badge, .fo-photo.broken img.flag-xl{
+  filter:grayscale(1) brightness(.55) contrast(1.05)}
+.fo-photo.broken::after{content:''; position:absolute; inset:0; border-radius:50%; pointer-events:none; opacity:0;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Cg%20stroke='white'%20stroke-width='1.6'%20fill='none'%20stroke-linecap='round'%3E%3Cpath%20d='M50%2050%20L42%2022%20L45%206'/%3E%3Cpath%20d='M50%2050%20L33%2041%20L10%2033'/%3E%3Cpath%20d='M50%2050%20L31%2060%20L9%2076'/%3E%3Cpath%20d='M50%2050%20L54%2074%20L49%2095'/%3E%3Cpath%20d='M50%2050%20L71%2061%20L93%2069'/%3E%3Cpath%20d='M50%2050%20L67%2037%20L89%2027'/%3E%3Cpath%20d='M42%2022%20L36%2019'/%3E%3Cpath%20d='M33%2041%20L29%2053'/%3E%3Cpath%20d='M54%2074%20L60%2078'/%3E%3C/g%3E%3C/svg%3E") center/cover no-repeat;
+  animation:crackIn .2s ease-out .5s forwards}
+@keyframes koShake{0%{transform:translateX(0) rotate(0)}15%{transform:translateX(-7px) rotate(-11deg)}
+  30%{transform:translateX(7px) rotate(9deg)}45%{transform:translateX(-5px) rotate(-7deg)}
+  60%{transform:translateX(4px) rotate(5deg)}100%{transform:translateX(0) rotate(-7deg)}}
+@keyframes crackIn{to{opacity:.92}}
+
+/* empate: ambos neutrales, leve balanceo */
+.fo-photo.tied{animation:winPop .5s cubic-bezier(.22,1,.36,1) both}
+.fo-photo.tied .photo, .fo-photo.tied .badge, .fo-photo.tied img.flag-xl{
+  border-color:var(--accent2) !important; box-shadow:0 0 16px rgba(124,77,255,.6); animation:tieBob 2s ease-in-out infinite}
+@keyframes tieBob{50%{transform:translateY(-5px)}}
+
+.win-actions{display:flex; gap:10px; margin-top:18px}
+.win-actions .btn{flex:1}
+
+/* ---------- responsive ---------- */
+@media (max-width:560px){
+  :root{--lane-h:58px}
+  .roster{grid-template-columns:1fr}
+  .runner .ava .emoji{font-size:30px}
+  .game-grid{grid-template-columns:1fr 1fr}
+}
+
+/* ============================================================
+   MENÚ DE JUEGOS
+   ============================================================ */
+.game-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-top:10px}
+.game-card{position:relative; border:2px solid var(--card-bd); border-radius:20px; padding:24px 14px;
+  text-align:center; cursor:pointer; background:rgba(255,255,255,.04); transition:.18s}
+.game-card:hover{transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 30px rgba(255,45,117,.25)}
+.game-card .gc-num{position:absolute; top:10px; left:12px; width:26px; height:26px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-weight:900;
+  display:flex; align-items:center; justify-content:center; font-size:14px}
+.game-card .gc-em{font-size:48px; display:block}
+.game-card .gc-nm{font-weight:900; font-size:18px; margin-top:8px}
+.game-card .gc-ct{color:var(--muted); font-size:12px; margin-top:2px}
+.foot-note{text-align:center; color:var(--muted); font-size:13px; margin-top:22px; line-height:1.5}
+
+/* ============================================================
+   CONFIG: cabecera, instrucciones, categorías, equipos
+   ============================================================ */
+.setup-head{display:flex; align-items:center; gap:14px; margin-bottom:18px}
+.setup-head h1{font-size:clamp(24px,5vw,38px); font-weight:900}
+
+.instr summary{cursor:pointer; font-weight:800; font-size:17px; list-style:none}
+.instr summary::-webkit-details-marker{display:none}
+.instr summary::before{content:'▸ '; color:var(--accent)}
+.instr[open] summary::before{content:'▾ '}
+.instr ol{margin:12px 0 2px 20px; color:var(--muted); line-height:1.7}
+.instr ol li{margin-bottom:4px}
+
+.cat-tabs{display:flex; gap:8px; flex-wrap:wrap}
+.cat-tab{font-family:inherit; font-weight:800; cursor:pointer; padding:10px 16px; border-radius:12px;
+  border:2px solid var(--card-bd); background:rgba(255,255,255,.03); color:var(--txt); transition:.15s}
+.cat-tab:hover{border-color:var(--accent2)}
+.cat-tab.sel{border-color:var(--accent); background:rgba(255,45,117,.14); color:#fff}
+
+.vs-presets{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px}
+.vs-presets .preset{padding:10px 14px; font-size:14px}
+.team-toggle{display:flex; align-items:center; gap:10px; font-weight:600; cursor:pointer}
+.team-toggle input{width:20px; height:20px; accent-color:var(--ok)}
+.team-count{display:flex; align-items:center; gap:10px; margin-top:12px; font-weight:600}
+.team-count select{padding:8px 10px; border-radius:10px; border:1px solid var(--card-bd);
+  background:#0e1430; color:var(--txt); font-family:inherit; font-weight:700}
+
+/* selector de equipo y tecla en roster */
+.player-row .pteam{padding:6px 4px; border-radius:8px; border:2px solid var(--ok);
+  background:#0e1430; color:var(--ok); font-family:inherit; font-weight:800; font-size:12px}
+
+/* ============================================================
+   BADGES (clubes, jugadores, atletas, caballos)
+   ============================================================ */
+.badge{display:inline-flex; align-items:center; justify-content:center; font-weight:900;
+  border-radius:50%; border:2px solid rgba(255,255,255,.85); box-shadow:0 2px 6px rgba(0,0,0,.45);
+  line-height:1; text-align:center; overflow:hidden}
+.badge.b-sm{width:30px; height:30px; font-size:11px; border-width:1.5px}
+.badge.b-lg{width:50px; height:50px; font-size:15px}
+.badge.b-xl{width:120px; height:120px; font-size:36px; border-width:3px}
+
+/* FOTOS reales (jugadores / atletas) */
+.photo{object-fit:cover; object-position:top center; border-radius:50%;
+  border-style:solid; box-shadow:0 3px 10px rgba(0,0,0,.55); background:#1a2030; display:inline-block}
+.photo.p-sm{width:32px; height:32px; border-width:2px}
+.photo.p-lg{width:54px; height:54px; border-width:3px}
+.photo.p-xl{width:140px; height:140px; border-width:4px}
+
+/* ============================================================
+   LANE: múltiples teclas/avatares (modo equipos)
+   ============================================================ */
+.lane .info .keys{display:flex; flex-direction:column; gap:2px}
+.lane .info .keys .key{font-weight:900; background:#0e1430; color:var(--gold);
+  border:1.5px solid var(--accent2); border-radius:6px; padding:1px 6px; font-size:11px; text-transform:uppercase; text-align:center}
+.lane .info .ava{display:flex; align-items:center; gap:-4px}
+.lane .info .ava > *{margin-left:-6px}
+.lane .info .ava > *:first-child{margin-left:0}
+.runner .ava{display:flex; align-items:center}
+.runner .ava > *{margin-left:-8px}
+.runner .ava > *:first-child{margin-left:0}
+
+.win-icon{display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:wrap}
+.podium .p b{display:inline-flex; gap:2px; justify-content:center; margin:4px 0}
+.lane .info .ava-photo{display:inline-flex}
+
+/* ============================================================
+   TAMAÑO ADAPTABLE  (pocos = grandes · muchos = compactos)
+   Define alto de carril (--lane-h), tamaño de avatar (--rav) y emoji (--rfs)
+   ============================================================ */
+.track.t-xl{--lane-h:150px; --rav:108px; --rfs:84px}   /* 1 vs 1 */
+.track.t-lg{--lane-h:104px; --rav:74px;  --rfs:56px}   /* 3-5 */
+.track.t-md{--lane-h:78px;  --rav:54px;  --rfs:40px}   /* 6-9 */
+.track.t-sm{--lane-h:56px;  --rav:38px;  --rfs:28px}   /* 10+ */
+.lane .info{flex-basis:215px}                          /* base (deja sitio al regalo) */
+.track.t-xl .info{flex-basis:255px}
+.track.t-sm .info{flex-basis:178px}
+.track.t-sm .info .sub{display:none}                   /* ahorra espacio con muchos */
+
+/* ============================================================
+   ANIMACIONES "VIVAS"  (banderas que ondean, avatares que respiran)
+   ============================================================ */
+@keyframes flagwave{
+  0%,100%{transform:rotate(-5deg) skewX(0)}
+  25%{transform:rotate(2deg) skewX(-5deg)}
+  50%{transform:rotate(5deg) skewX(0)}
+  75%{transform:rotate(2deg) skewX(5deg)}
+}
+@keyframes alivebob{
+  0%,100%{transform:translateY(0) rotate(-3deg)}
+  50%{transform:translateY(-12%) rotate(3deg)}
+}
+@keyframes pulseGlow{0%,100%{filter:drop-shadow(0 0 4px var(--gold))}50%{filter:drop-shadow(0 0 12px var(--gold))}}
+
+/* banderas: ondean en todos lados (menú, roster, carriles) */
+img.flag, img.flag-sm, img.flag-xl{transform-origin:50% 50%; animation:flagwave 2.6s ease-in-out infinite}
+
+/* corredor: cada avatar "respira"/se balancea, desincronizado por carril */
+.runner .ava img.flag{animation:flagwave 1.7s ease-in-out infinite; animation-delay:var(--delay,0s)}
+.runner .ava .emoji,
+.runner .ava .badge,
+.runner .ava .photo{animation:alivebob 1.7s ease-in-out infinite; animation-delay:var(--delay,0s)}
+
+/* el líder además brilla en dorado */
+.runner.leader .ava .photo,
+.runner.leader .ava .badge{box-shadow:0 0 14px var(--gold), 0 3px 10px rgba(0,0,0,.55)}
+
+@media (prefers-reduced-motion: reduce){
+  /* El movimiento "vivo" SUAVE (ondeo de banderas, rebote de avatares, vaivén en
+     eses y balón) se mantiene aun con "reducir movimiento": es parte del show en
+     vivo. Solo se apagan las animaciones BRUSCAS (sacudidas, golpes, destellos). */
+  .clash.on, .arena-ring .arena-field.clashing .fighter, .arena-ring .arena-field.hit{animation:none !important}
+  .punch{animation:none !important; opacity:0 !important}
+  .fo-photo.winner, .fo-photo.winner .photo, .fo-photo.winner .badge, .fo-crown{animation:none !important}
+  .fo-photo.broken{animation:none !important; transform:rotate(-7deg)}
+  .fo-photo.broken::after{animation:none !important; opacity:.92}
+  .fo-photo.tied, .fo-photo.tied .photo, .fo-photo.tied .badge{animation:none !important}
+  .hud-goal.warn{animation:none !important}
+  .vs-crown{transition:opacity .3s ease !important}   /* sin deslizar/saltar: aparece sin más */
+  .vs-crown.hop{animation:none !important}
+  .gl-chip.pulse{animation:none !important}
+  .gift-toast{animation:none !important}
+}
