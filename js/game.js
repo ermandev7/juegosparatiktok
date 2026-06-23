@@ -803,6 +803,12 @@
     state._ball  = boxeo ? null : $('.arena-field > .arena-ball', track);
     state._ballOwner = null; state._ballDash = null;
     state._close = false;
+    // lado físico de cada equipo (cambia al medio tiempo) + elementos de cada miembro
+    a.side = 'l'; b.side = 'r';
+    a._memEls = [...a.runnerEl.querySelectorAll('.amem')];
+    b._memEls = [...b.runnerEl.querySelectorAll('.amem')];
+    state._ballTargetEl = null; state._passIdx = 0; state._passT = 0;
+    state._halftimeDone = false;
     updatePositions();
   }
 
@@ -812,7 +818,10 @@
     if (!state._arena || !state._crown) return;
     const [a, b] = state.racers;
     let side = null;
-    if (a.score !== b.score && (a.score > 0 || b.score > 0)) side = a.score > b.score ? 'l' : 'r';
+    if (a.score !== b.score && (a.score > 0 || b.score > 0)){
+      const leader = a.score > b.score ? a : b;
+      side = leader.side || (leader === a ? 'l' : 'r');     // lado FÍSICO del líder (cambia al medio tiempo)
+    }
     if (side === state._crownSide) return;
     state._crownSide = side;
     state._field.classList.toggle('lead-l', side === 'l');
@@ -871,11 +880,14 @@
   }
 
   function arenaFighter(r, side){
-    const avas = r.members.map(m => avatarHTML(m, 'lg')).join('');
+    // cada miembro en su propio <span class="amem"> -> formación (alineación) y el balón
+    // puede ubicar a un jugador concreto para "pasárselo".
+    const avas = r.members.map((m,i) => `<span class="amem" data-mem="${i}">${avatarHTML(m, 'lg')}</span>`).join('');
     const keys = r.members.map(m => `<span class="key">${niceKey(m.key)}</span>`).join('');
+    const formCls = ' form-' + r.members.length;   // form-1 / form-2 / form-3
     return `
       <div class="runner fighter f-${side}" style="--lane-a:${shade(r.color,-6)}">
-        <span class="ava">${avas}</span>
+        <span class="ava${formCls}">${avas}</span>
         <div class="afoot">${keys}<span class="nm">${r.name}</span><span class="score">0</span></div>
       </div>`;
   }
@@ -1118,18 +1130,44 @@
      hacia el campo rival (lo invade) y el perdedor retrocede a defender su arco;
      el balón viaja con el que domina. Gradual y equilibrado: arranca suave y se
      acentúa conforme crece el marcador, sin saltos bruscos. */
+  /* MEDIO TIEMPO: los dos equipos cambian de lado de la cancha (como un partido real).
+     Solo invierte la POSICIÓN física (el marcador de arriba se queda fijo, como un
+     marcador real). La transition CSS anima el cruce; la corona se recoloca. */
+  function swapSides(){
+    if (!state._arena || state._boxeo) return;
+    const [a, b] = state.racers;
+    a.side = a.side === 'l' ? 'r' : 'l';
+    b.side = b.side === 'l' ? 'r' : 'l';
+    a.runnerEl.dataset.side = a.side; b.runnerEl.dataset.side = b.side;
+    updateFutbolArena();                 // reposiciona (la transición anima el cruce)
+    state._crownSide = '_'; moveArenaCrown();
+    spawnCenterBanner('🔄 ¡Cambio de cancha!');
+    if (game().id === 'futbol') SFX.whistle(0.4);
+  }
+
+  /* Cartel grande y breve en el centro (medio tiempo, etc.) */
+  function spawnCenterBanner(text){
+    const scene = $('#scene'); if (!scene) return;
+    const el = document.createElement('div');
+    el.className = 'center-banner';
+    el.textContent = text;
+    scene.appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+  }
+
   function updateFutbolArena(){
     const [a, b] = state.racers;
+    // equipo que está físicamente a la izquierda / derecha (puede cambiar al medio tiempo)
+    const L = a.side === 'l' ? a : b;
+    const R = a.side === 'l' ? b : a;
     const tot = a.score + b.score;
-    const dom = tot > 0 ? (a.score - b.score) / tot : 0;   // -1..1 (cuota relativa, a=izq)
+    const dom = tot > 0 ? (L.score - R.score) / tot : 0;   // -1..1 (cuota del de la IZQUIERDA)
     const conf = tot / (tot + 5);                           // suaviza al inicio, crece con el total
     const C  = clamp(50 + dom * conf * 34, 22, 78);         // línea de juego (% desde la izquierda)
     const gap = 12;
-    const aX = clamp(C - gap, 9, 74);
-    const bX = clamp(C + gap, 26, 91);
-    a.runnerEl.style.left = aX + '%'; a.runnerEl.style.right = 'auto';
-    b.runnerEl.style.left = bX + '%'; b.runnerEl.style.right = 'auto';
-    // el balón ya NO se posiciona aquí: lo sigue updateBall() cada frame (pegado al líder).
+    L.runnerEl.style.left = clamp(C - gap, 9, 74) + '%'; L.runnerEl.style.right = 'auto';
+    R.runnerEl.style.left = clamp(C + gap, 26, 91) + '%'; R.runnerEl.style.right = 'auto';
+    // el balón ya NO se posiciona aquí: lo sigue updateBall() cada frame (entre los compañeros).
   }
 
   /* El balón va PEGADO al equipo que va ganando: cada frame copia su posición real
@@ -1139,29 +1177,50 @@
     if (!state._ball || !state._field) return;
     const [a, b] = state.racers;
     const tot = a.score + b.score;
+    const now = performance.now();
     let owner = null;                                        // null = empate/0-0 -> al centro
     if (tot > 0 && a.score !== b.score) owner = a.score > b.score ? a : b;
 
-    // ¿cambió de dueño? -> arranca un "dash" pronunciado desde donde está
-    if (owner !== state._ballOwner){
+    // ¿cambió de equipo? -> reinicia el "pase" y dispara el cruce con giro
+    const ownerChanged = owner !== state._ballOwner;
+    if (ownerChanged){
       state._ballOwner = owner;
-      state._ballDash = { fx: parseFloat(state._ball.style.left) || 50,
-                          fy: parseFloat(state._ball.style.top)  || 50,
-                          t0: performance.now() };
-      if (owner){                                            // giro/rebote solo al pasar a un equipo
+      state._passIdx = 0; state._passT = now;
+      if (owner){
         state._ball.classList.remove('switching'); void state._ball.offsetWidth;
         state._ball.classList.add('switching');
       }
     }
 
-    // posición objetivo (en % del campo)
+    // elegir el COMPAÑERO que tiene el balón: se lo pasan cada ~1.1s (entre ellos)
+    let targetEl = owner ? owner.runnerEl : null;
+    if (owner && owner._memEls && owner._memEls.length > 1){
+      if (!ownerChanged && now - (state._passT || 0) > 1100){
+        state._passIdx = (state._passIdx + 1) % owner._memEls.length;   // pasa al siguiente
+        state._passT = now;
+      }
+      targetEl = owner._memEls[Math.min(state._passIdx, owner._memEls.length - 1)] || owner.runnerEl;
+    }
+
+    // si cambió el compañero (sin cambiar de equipo) -> arranca un dash corto (el pase)
+    if (!ownerChanged && targetEl !== state._ballTargetEl && owner){
+      state._ballDash = { fx: parseFloat(state._ball.style.left) || 50,
+                          fy: parseFloat(state._ball.style.top)  || 50, t0: now };
+    }
+    if (ownerChanged){
+      state._ballDash = { fx: parseFloat(state._ball.style.left) || 50,
+                          fy: parseFloat(state._ball.style.top)  || 50, t0: now };
+    }
+    state._ballTargetEl = targetEl;
+
+    // posición objetivo (en % del campo): el jugador que tiene el balón
     const fr = state._field.getBoundingClientRect();
     let tx = 50, ty = 50;
-    if (owner){
-      const rr = owner.runnerEl.getBoundingClientRect();
+    if (targetEl){
+      const rr = targetEl.getBoundingClientRect();
       tx = ((rr.left + rr.width / 2 - fr.left) / fr.width)  * 100;
       ty = ((rr.top  + rr.height / 2 - fr.top) / fr.height) * 100;
-      tx += owner.runnerEl.dataset.side === 'l' ? 7 : -7;    // un poco hacia el arco rival (driblando)
+      tx += owner.side === 'l' ? 7 : -7;    // un poco hacia el arco rival (driblando)
     }
     tx = clamp(tx, 4, 96); ty = clamp(ty, 12, 88);
 
@@ -1193,6 +1252,12 @@
       const left = Math.max(0, state.duration - (performance.now() - state.startTs)/1000);
       $('#hudGoal').textContent = '⏱️ ' + fmtTime(left, state.duration >= 60);
       $('#hudGoal').classList.toggle('warn', left <= 10);   // aviso de urgencia
+      // MEDIO TIEMPO: cambio de cancha (como un partido real), solo en fútbol-arena
+      if (!state._halftimeDone && state._arena && !state._boxeo &&
+          (state.duration - left) >= state.duration / 2){
+        state._halftimeDone = true;
+        swapSides();
+      }
       if (left <= 0){ endGame(); return; }
     }
     if (state._arena && !state._boxeo && !state.paused) updateBall();   // balón pegado al líder

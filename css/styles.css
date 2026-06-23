@@ -465,7 +465,28 @@ img.flag-sm{width:24px; height:16px; object-fit:cover; border-radius:3px; border
 .arena .fighter .afoot .key{color:var(--gold); border:1px solid var(--accent2); border-radius:6px; padding:1px 6px; font-size:11px; text-transform:uppercase}
 .arena .fighter .afoot .nm{max-width:160px; overflow:hidden; text-overflow:ellipsis}
 .arena .fighter .afoot .score{background:var(--gold); color:#1a1a1a; border-radius:14px; padding:1px 9px; min-width:24px; text-align:center}
-.arena .fighter .ava{display:flex; gap:4px}
+/* ALINEACIÓN: en 2v2/3v3 los jugadores se ponen en formación (columna con leve zig),
+   no encimados uno sobre otro. form-1 = un solo jugador (fila). */
+.arena .fighter .ava{display:flex; flex-direction:column; align-items:center; gap:12px}
+.arena .fighter .ava.form-1{flex-direction:row}
+.arena .fighter .amem{display:flex; transition:transform .3s}
+.arena .fighter .ava.form-2 .amem:nth-child(1){transform:translateX(-12px)}
+.arena .fighter .ava.form-2 .amem:nth-child(2){transform:translateX(12px)}
+.arena .fighter .ava.form-3 .amem:nth-child(1){transform:translateX(-14px)}
+.arena .fighter .ava.form-3 .amem:nth-child(2){transform:translateX(14px)}
+.arena .fighter .ava.form-3 .amem:nth-child(3){transform:translateX(-14px)}
+
+/* Cartel central (medio tiempo / avisos) */
+.center-banner{position:absolute; left:50%; top:42%; z-index:9; pointer-events:none; white-space:nowrap;
+  font-weight:900; font-size:clamp(28px,6vw,64px); color:var(--gold);
+  -webkit-text-stroke:2px rgba(0,0,0,.4); text-shadow:0 4px 18px rgba(0,0,0,.65);
+  transform:translate(-50%,-50%) scale(.4); opacity:0; animation:centerBanner 2.2s ease forwards}
+@keyframes centerBanner{
+  12%{opacity:1; transform:translate(-50%,-50%) scale(1.12)}
+  22%{transform:translate(-50%,-50%) scale(1)}
+  80%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0; transform:translate(-50%,-50%) scale(.92)}
+}
 
 /* --- arena dinámica (fútbol/comidas/resistencia/motos): vaivén en eses + objeto central que viaja con el dominador --- */
 /* ambos se posicionan por 'left' y se centran igual (no por 'right') */
