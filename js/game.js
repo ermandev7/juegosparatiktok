@@ -456,13 +456,29 @@
 
     refreshRoster();
 
-    // Preset por defecto según el juego:
-    // - versusOnly (Fútbol): se OCULTA "Todos contra todos" y arranca en 1 vs 1 (duelo).
-    // - individualDefault (Bandera de Países): arranca en "Todos contra todos".
+    // Presets según el juego:
+    // - versusOnly (Fútbol): se OCULTA "Todos contra todos"; arranca en 1 vs 1 (duelo).
+    // - individualOnly (Bandera de Países): se OCULTAN 1v1/2v2/3v3 y el modo equipos;
+    //   queda solo "Todos contra todos" y arranca ahí (solo los que tienen regalo).
     const indivBtn = document.querySelector('.preset[data-preset="individual"]');
-    if (indivBtn) indivBtn.style.display = g.versusOnly ? 'none' : '';
-    if (g.versusOnly) applyPreset('1v1');
-    else if (g.individualDefault) applyPreset('individual');
+    const versusBtns = ['1v1','2v2','3v3'].map(k => document.querySelector(`.preset[data-preset="${k}"]`));
+    const teamToggle = document.querySelector('.team-toggle');
+    // reset (se comparten entre juegos): mostrar todo y luego ocultar según el juego
+    if (indivBtn) indivBtn.style.display = '';
+    versusBtns.forEach(b => { if (b) b.style.display = ''; });
+    if (teamToggle) teamToggle.style.display = '';
+
+    if (g.versusOnly){
+      if (indivBtn) indivBtn.style.display = 'none';
+      applyPreset('1v1');
+    } else if (g.individualOnly){
+      versusBtns.forEach(b => { if (b) b.style.display = 'none'; });
+      if (teamToggle) teamToggle.style.display = 'none';
+      $('#teamCountRow').hidden = true;
+      applyPreset('individual');
+    } else if (g.individualDefault){
+      applyPreset('individual');
+    }
 
     show('setup');
   }

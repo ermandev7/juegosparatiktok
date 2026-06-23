@@ -81,7 +81,7 @@ const GAMES = {
     id: 'banderas', name: 'Bandera de Países', emoji: '🚩',
     scenario: 'ruta', finishLabel: '🏁',
     avatar: 'flag',
-    individualDefault: true,                // arranca en "todos contra todos"
+    individualOnly: true,                   // SOLO "todos contra todos" (sin 1v1/2v2/3v3 ni equipos)
     instructions: [
       'Cada país es un competidor con su BANDERA real.',
       'Es TODOS CONTRA TODOS: corren a la meta en carriles.',
