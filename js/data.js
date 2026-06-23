@@ -16,41 +16,15 @@ const GAMES = {
   futbol: {
     id: 'futbol', name: 'Fútbol', emoji: '⚽',
     scenario: 'cancha', finishLabel: '⚽ GOL',
+    versusOnly: true,                       // solo DUELO (1v1/2v2/3v3); sin "todos contra todos"
     instructions: [
-      'Elige una categoría: Selecciones (mundial), Clubes de Latinoamérica o Jugadores.',
-      'Cada competidor tiene una tecla. Cada pulsación = +1 gol / avance.',
-      'Puedes jugar todos contra todos, o por equipos (1v1, 2v2, 3v3...).',
-      'En TikFinity asigna cada regalo/like/comentario a la tecla de un competidor.',
-      'El primero en llegar a la meta (o el que más tenga al acabar el tiempo) ¡gana!'
+      'Elige una categoría: Clubes de Latinoamérica o Jugadores del mundo.',
+      'Fútbol es un DUELO cara a cara: 1 vs 1, 2 vs 2 o 3 vs 3.',
+      'Cada pulsación (o regalo de TikTok) hace avanzar a tu lado +1.',
+      'En TikTok/TikFinity asigna un regalo a cada competidor.',
+      'Al acabar el tiempo, el lado con más puntos ¡gana!'
     ],
     categories: {
-      selecciones: {
-        name: '🌎 Selecciones', avatar: 'flag', useFlags: true,
-        competitors: [
-          { id: 'AR', name: 'Argentina',   sub: 'CONMEBOL', color: '#74ACDF' },
-          { id: 'BR', name: 'Brasil',      sub: 'CONMEBOL', color: '#009C3B' },
-          { id: 'MX', name: 'México',      sub: 'CONCACAF', color: '#006847' },
-          { id: 'CO', name: 'Colombia',    sub: 'CONMEBOL', color: '#FCD116' },
-          { id: 'UY', name: 'Uruguay',     sub: 'CONMEBOL', color: '#5BA8DF' },
-          { id: 'CL', name: 'Chile',       sub: 'CONMEBOL', color: '#0039A6' },
-          { id: 'PE', name: 'Perú',        sub: 'CONMEBOL', color: '#D91023' },
-          { id: 'EC', name: 'Ecuador',     sub: 'CONMEBOL', color: '#FFD100' },
-          { id: 'PY', name: 'Paraguay',    sub: 'CONMEBOL', color: '#D52B1E' },
-          { id: 'VE', name: 'Venezuela',   sub: 'CONMEBOL', color: '#FFCE00' },
-          { id: 'BO', name: 'Bolivia',     sub: 'CONMEBOL', color: '#007934' },
-          { id: 'CR', name: 'Costa Rica',  sub: 'CONCACAF', color: '#002B7F' },
-          { id: 'PA', name: 'Panamá',      sub: 'CONCACAF', color: '#DA121A' },
-          { id: 'HN', name: 'Honduras',    sub: 'CONCACAF', color: '#18C3DF' },
-          { id: 'GT', name: 'Guatemala',   sub: 'CONCACAF', color: '#4997D0' },
-          { id: 'ES', name: 'España',      sub: 'UEFA',     color: '#AA151B' },
-          { id: 'FR', name: 'Francia',     sub: 'UEFA',     color: '#0055A4' },
-          { id: 'DE', name: 'Alemania',    sub: 'UEFA',     color: '#222222' },
-          { id: 'IT', name: 'Italia',      sub: 'UEFA',     color: '#0066CC' },
-          { id: 'PT', name: 'Portugal',    sub: 'UEFA',     color: '#006600' },
-          { id: 'NL', name: 'Países Bajos',sub: 'UEFA',     color: '#FF6200' },
-          { id: 'GB-ENG', name: 'Inglaterra', sub: 'UEFA',  color: '#CF142B' },
-        ]
-      },
 
       /* Clubes más populares por país de Latinoamérica */
       clubes: {
@@ -100,6 +74,45 @@ const GAMES = {
         ]
       }
     }
+  },
+
+  /* ============================== BANDERA DE PAÍSES ============================== */
+  banderas: {
+    id: 'banderas', name: 'Bandera de Países', emoji: '🚩',
+    scenario: 'ruta', finishLabel: '🏁',
+    avatar: 'flag',
+    individualDefault: true,                // arranca en "todos contra todos"
+    instructions: [
+      'Cada país es un competidor con su BANDERA real.',
+      'Es TODOS CONTRA TODOS: corren a la meta en carriles.',
+      'Cada pulsación (o regalo de TikTok) hace avanzar al país +1.',
+      'En TikTok/TikFinity asigna un regalo a cada país.',
+      'El país más votado al acabar el tiempo ¡gana!'
+    ],
+    competitors: [
+      { id: 'AR', name: 'Argentina',   sub: 'CONMEBOL', color: '#74ACDF' },
+      { id: 'BR', name: 'Brasil',      sub: 'CONMEBOL', color: '#009C3B' },
+      { id: 'MX', name: 'México',      sub: 'CONCACAF', color: '#006847' },
+      { id: 'CO', name: 'Colombia',    sub: 'CONMEBOL', color: '#FCD116' },
+      { id: 'UY', name: 'Uruguay',     sub: 'CONMEBOL', color: '#5BA8DF' },
+      { id: 'CL', name: 'Chile',       sub: 'CONMEBOL', color: '#0039A6' },
+      { id: 'PE', name: 'Perú',        sub: 'CONMEBOL', color: '#D91023' },
+      { id: 'EC', name: 'Ecuador',     sub: 'CONMEBOL', color: '#FFD100' },
+      { id: 'PY', name: 'Paraguay',    sub: 'CONMEBOL', color: '#D52B1E' },
+      { id: 'VE', name: 'Venezuela',   sub: 'CONMEBOL', color: '#FFCE00' },
+      { id: 'BO', name: 'Bolivia',     sub: 'CONMEBOL', color: '#007934' },
+      { id: 'CR', name: 'Costa Rica',  sub: 'CONCACAF', color: '#002B7F' },
+      { id: 'PA', name: 'Panamá',      sub: 'CONCACAF', color: '#DA121A' },
+      { id: 'HN', name: 'Honduras',    sub: 'CONCACAF', color: '#18C3DF' },
+      { id: 'GT', name: 'Guatemala',   sub: 'CONCACAF', color: '#4997D0' },
+      { id: 'ES', name: 'España',      sub: 'UEFA',     color: '#AA151B' },
+      { id: 'FR', name: 'Francia',     sub: 'UEFA',     color: '#0055A4' },
+      { id: 'DE', name: 'Alemania',    sub: 'UEFA',     color: '#222222' },
+      { id: 'IT', name: 'Italia',      sub: 'UEFA',     color: '#0066CC' },
+      { id: 'PT', name: 'Portugal',    sub: 'UEFA',     color: '#006600' },
+      { id: 'NL', name: 'Países Bajos',sub: 'UEFA',     color: '#FF6200' },
+      { id: 'GB-ENG', name: 'Inglaterra', sub: 'UEFA',  color: '#CF142B' },
+    ]
   },
 
   /* ============================== COMIDAS TÍPICAS (Latinoamérica) ============================== */

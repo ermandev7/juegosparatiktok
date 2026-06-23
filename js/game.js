@@ -455,6 +455,15 @@
     } else catCard.hidden = true;
 
     refreshRoster();
+
+    // Preset por defecto según el juego:
+    // - versusOnly (Fútbol): se OCULTA "Todos contra todos" y arranca en 1 vs 1 (duelo).
+    // - individualDefault (Bandera de Países): arranca en "Todos contra todos".
+    const indivBtn = document.querySelector('.preset[data-preset="individual"]');
+    if (indivBtn) indivBtn.style.display = g.versusOnly ? 'none' : '';
+    if (g.versusOnly) applyPreset('1v1');
+    else if (g.individualDefault) applyPreset('individual');
+
     show('setup');
   }
 

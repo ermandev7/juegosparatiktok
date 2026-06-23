@@ -135,6 +135,8 @@
   function simulateFollow(user, uniqueId){
     if (followCb) followCb({ type:'follow', user:user||'Tester', uniqueId:uniqueId||'tester' });
   }
+  /* simula un cambio de estado (para probar la UI sin estar en vivo) */
+  function simulateStatus(state, msg){ if (statusCb) statusCb(state, msg || state); }
   function simulateShare(user, uniqueId){
     if (shareCb) shareCb({ type:'share', user:user||'Tester', uniqueId:uniqueId||'tester' });
   }
@@ -142,7 +144,7 @@
   window.TikTok = {
     GIFT_CATALOG, byKey, giftKeyFromName, giftImg, pool,
     connect, disconnect, simulateGift, simulateCatalog, simulateComment, simulateLike,
-    simulateFollow, simulateShare,
+    simulateFollow, simulateShare, simulateStatus,
     onGift:    cb => giftCb = cb,
     onStatus:  cb => statusCb = cb,
     onCatalog: cb => catalogCb = cb,
