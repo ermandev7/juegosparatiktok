@@ -8,11 +8,12 @@
   'use strict';
 
   const KEY_POOL = '1234567890qwertyuiopasdfghjklñzxcvbnm'.split('');
+  const MAX_INDIVIDUAL = 12;   // tope de competidores en "todos contra todos"
 
   const state = {
     gameId: null,
     catId: null,
-    winmode: 'tiempo', target: 30, duration: 60,
+    winmode: 'tiempo', target: 30, duration: 300,
     teamMode: false, teamCount: 2,
     roster: [],          // {id,name,sub,color,icon?,abbr?,_av,key,on,teamId,gift,giftPts,word}
     racers: [],          // unidades que corren (individual o equipo)
@@ -476,8 +477,6 @@
       if (teamToggle) teamToggle.style.display = 'none';
       $('#teamCountRow').hidden = true;
       applyPreset('individual');
-    } else if (g.individualDefault){
-      applyPreset('individual');
     }
 
     show('setup');
@@ -510,36 +509,98 @@
     autoAssignGifts();
   }
 
-  /* regalos asignables (baratos primero). Con catálogo oficial = todos los de TikTok. */
+  /* valor (en 💎) de un regalo del catálogo */
+  function giftVal(g){ return g.diamonds != null ? g.diamonds : (g.coste != null ? g.coste : 1); }
+
+  /* TODOS los regalos en un solo lugar: los de la BASE DE DATOS (reales, con su foto)
+     primero por popularidad (`sent`), y luego el resto del catálogo; a igualdad, el más
+     barato. Así el select los muestra todos con foto y la asignación por defecto prioriza
+     los de la BD. */
   function giftPool(){
     const cat = (window.TikTok && (window.TikTok.pool ? window.TikTok.pool() : window.TikTok.GIFT_CATALOG)) || [];
-    const val = g => (g.diamonds != null ? g.diamonds : g.coste);
-    return [...cat].sort((a,b) => val(a) - val(b));
+    return [...cat].sort((a,b) => (b.sent||0) - (a.sent||0) || giftVal(a) - giftVal(b));
   }
 
-  /* Asigna a cada participante un regalo ÚNICO (del más barato al más caro).
-     No toca los que el admin cambió a mano (p._giftManual). Si no hay regalos
-     suficientes (offline con muchos competidores), los sobrantes quedan sin regalo. */
+  /* Reparte un regalo ÚNICO a cada competidor, según las REGLAS:
+       1) Los puntos de cada regalo = su VALOR en 💎.
+       2) Prioridad a los regalos MÁS enviados (populares).
+       3) Todos contra todos -> todos los regalos del MISMO valor.
+          Versus/equipos      -> cada equipo con regalos de los MISMOS valores (espejo):
+                                  por cada "puesto" se elige un valor y se da un regalo de
+                                  ese valor a cada equipo.
+     No toca los que el admin cambió a mano (p._giftManual). */
   function autoAssignGifts(){
     const pool = giftPool();
     const used = new Set(state.roster.filter(p => p._giftManual && p.gift).map(p => p.gift));
-    let i = 0;
-    state.roster.forEach(p => {
-      if (p.giftPts == null) p.giftPts = 1;
-      if (p._giftManual) return;
-      while (i < pool.length && used.has(pool[i].key)) i++;
-      p.gift = i < pool.length ? pool[i].key : null;
-      if (p.gift){ used.add(p.gift); i++; }
-    });
+    const take = (gifts, value) => {                 // saca el siguiente regalo libre de la lista
+      while (gifts._i == null) gifts._i = 0;
+      while (gifts._i < gifts.length && used.has(gifts[gifts._i].key)) gifts._i++;
+      const g = gifts[gifts._i];
+      if (g){ used.add(g.key); gifts._i++; return { key: g.key, pts: value != null ? value : giftVal(g) }; }
+      return null;
+    };
+    // agrupa el pool por valor (cada grupo ya viene ordenado por popularidad)
+    const byValue = {};
+    pool.forEach(g => { const v = giftVal(g); (byValue[v] = byValue[v] || []).push(g); });
+    const valPop = {};                                // popularidad total por valor
+    pool.forEach(g => { const v = giftVal(g); valPop[v] = (valPop[v]||0) + (g.sent||0); });
+
+    if (state.teamMode){
+      // ----- VERSUS / EQUIPOS: valores espejo por puesto -----
+      const teams = {};
+      state.roster.forEach(p => { if (p.on){ const t = clamp(p.teamId,1,state.teamCount); (teams[t]=teams[t]||[]).push(p); } });
+      const teamArr = Object.values(teams);
+      const numTeams = teamArr.length;
+      const maxSlots = teamArr.reduce((m,t)=>Math.max(m,t.length), 0);
+      const valuesByPop = Object.keys(byValue).map(Number).sort((a,b)=> (valPop[b]||0)-(valPop[a]||0) || a-b);
+      const freeOf = v => (byValue[v]||[]).filter(g => !used.has(g.key)).length;   // regalos libres de ese valor
+      // valores que ALCANZAN para todos los equipos (>= nº de equipos), populares primero.
+      // Cada puesto usa un valor DISTINTO (cíclico) para dar variedad sin romper el espejo.
+      const eligible = valuesByPop.filter(v => freeOf(v) >= numTeams);
+      for (let slot = 0; slot < maxSlots; slot++){
+        let value;
+        if (eligible.length){
+          value = eligible[slot % eligible.length];
+          if (freeOf(value) < numTeams) value = eligible.find(v => freeOf(v) >= numTeams) ?? value;
+        }
+        if (value == null) value = valuesByPop.slice().sort((a,b)=> freeOf(b)-freeOf(a))[0] ?? 1;
+        const gifts = byValue[value] || pool;
+        teamArr.forEach(members => {
+          const p = members[slot];
+          if (!p || p._giftManual) return;
+          const got = take(gifts, value);
+          p.gift = got ? got.key : null; p.giftPts = got ? got.pts : 1;
+        });
+      }
+    } else {
+      // ----- TODOS CONTRA TODOS: todos del MISMO valor, los más enviados -----
+      const need = state.roster.filter(p => !p._giftManual).length;
+      const values = Object.keys(byValue).map(Number);
+      let value = 1;
+      if (values.length){
+        const covering = values.filter(v => byValue[v].length >= need);   // valores con regalos suficientes
+        const pick = covering.length ? covering : values;
+        value = pick.sort((a,b)=> (valPop[b]||0)-(valPop[a]||0) || a-b)[0]; // el más popular que cubra
+      }
+      const gifts = byValue[value] || pool;
+      state.roster.forEach(p => {
+        if (p._giftManual) return;
+        const got = take(gifts, value);
+        p.gift = got ? got.key : null; p.giftPts = got ? got.pts : 1;
+      });
+    }
   }
-  /* <option> para el selector de regalo de cada competidor (con su valor en 💎) */
-  function giftOptions(sel){
-    const opts = ['<option value="">— sin regalo —</option>'];
-    giftPool().forEach(g => {
-      const d = g.diamonds != null ? g.diamonds : g.coste;
-      opts.push(`<option value="${g.key}" ${g.key===sel?'selected':''}>${g.emoji} ${g.label} · ${d}💎</option>`);
-    });
-    return opts.join('');
+  /* etiqueta de texto del regalo elegido (nombre · valor) para el botón-disparador */
+  function giftLabel(key){
+    const g = key && giftInfo(key);
+    return g ? `${g.label} · ${giftVal(g)}💎` : '— sin regalo —';
+  }
+  /* botón que ABRE el desplegable de regalos: muestra la FOTO real del regalo + su nombre.
+     (Un <select> nativo no puede mostrar imágenes, por eso es un desplegable propio.) */
+  function giftTriggerHTML(p){
+    const ph = p.gift ? giftPhotoHTML(p.gift, 'gp-ic') : `<span class="gp-ic gp-none">🎁</span>`;
+    return `<button type="button" class="pgift gift-trigger" title="Regalo de TikTok (clic para elegir)">`
+      + `${ph}<span class="gp-lb">${giftLabel(p.gift)}</span><span class="gp-ar">▾</span></button>`;
   }
   /* datos del catalogo a partir de la key */
   function giftInfo(key){ return (window.TikTok && window.TikTok.byKey[key]) || null; }
@@ -562,18 +623,84 @@
           <div class="psub">${p.sub||''}</div>
         </div>
         ${teamSel}
-        <button class="pkey" title="Clic y pulsa una tecla">${niceKey(p.key)}</button>
-        <input class="pword" type="text" value="${p.word||''}" maxlength="20" title="Palabra que el chat comenta para votar por este competidor" placeholder="palabra">
-        <select class="pgift" title="Regalo de TikTok que suma a este competidor">${giftOptions(p.gift)}</select>
+        ${giftTriggerHTML(p)}
         <input class="pgiftpts" type="number" value="${p.giftPts||1}" min="0" max="999" title="Puntos que da este regalo (×combo)">`;
       $('.pcheck', row).onchange = e => { p.on = e.target.checked; row.classList.toggle('off', !p.on); };
-      $('.pkey', row).onclick = e => captureKey(p, e.target);
       const ts = $('.pteam', row); if (ts) ts.onchange = e => p.teamId = +e.target.value;
-      const ws = $('.pword', row); if (ws) ws.oninput = e => p.word = e.target.value;
-      const gs = $('.pgift', row); if (gs) gs.onchange = e => { p.gift = e.target.value || null; p._giftManual = true; };
+      const gt = $('.gift-trigger', row); if (gt) gt.onclick = () => openGiftMenu(p, gt, row);
       const ps = $('.pgiftpts', row); if (ps) ps.oninput = e => p.giftPts = clamp(+e.target.value || 1, 0, 999);
       box.appendChild(row);
     });
+  }
+
+  /* ---- Desplegable de regalos CON FOTO (un <select> nativo no muestra imágenes) ---- */
+  function giftMenuEl(){
+    let m = document.getElementById('giftMenu');
+    if (!m){
+      m = document.createElement('div'); m.id = 'giftMenu'; m.className = 'gift-menu'; m.hidden = true;
+      document.body.appendChild(m);
+      document.addEventListener('click', (e) => {
+        if (m.hidden) return;
+        const t = state._giftMenu && state._giftMenu.trigger;
+        if (!m.contains(e.target) && !(t && t.contains(e.target))) closeGiftMenu();
+      }, true);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGiftMenu(); });
+      window.addEventListener('scroll', closeGiftMenu, true);
+      window.addEventListener('resize', closeGiftMenu);
+    }
+    return m;
+  }
+  function closeGiftMenu(){
+    const m = document.getElementById('giftMenu'); if (m) m.hidden = true;
+    if (state._giftMenu){ state._giftMenu.trigger.classList.remove('open'); state._giftMenu = null; }
+  }
+  function openGiftMenu(p, trigger, row){
+    if (state._giftMenu && state._giftMenu.trigger === trigger){ closeGiftMenu(); return; }  // toggle
+    const m = giftMenuEl();
+    m.innerHTML = '';
+    const search = document.createElement('input');
+    search.className = 'gm-search'; search.type = 'text'; search.placeholder = '🔎 Buscar regalo…';
+    const list = document.createElement('div'); list.className = 'gm-list';
+    m.appendChild(search); m.appendChild(list);
+    const used = new Set(state.roster.filter(o => o !== p && o.gift).map(o => o.gift));
+    const build = (flt) => {
+      list.innerHTML = '';
+      if (!flt){
+        const none = document.createElement('button');
+        none.type = 'button'; none.className = 'gm-opt' + (!p.gift ? ' sel' : '');
+        none.innerHTML = `<span class="gm-ic gp-none">🚫</span><span class="gm-nm">— sin regalo —</span>`;
+        none.onclick = () => selectGift(p, null, trigger, row);
+        list.appendChild(none);
+      }
+      giftPool().forEach(g => {
+        if (flt && !(g.label || '').toLowerCase().includes(flt)) return;
+        const isUsed = used.has(g.key);
+        const o = document.createElement('button');
+        o.type = 'button'; o.className = 'gm-opt' + (g.key === p.gift ? ' sel' : '') + (isUsed ? ' used' : '');
+        o.innerHTML = `${giftPhotoHTML(g.key, 'gm-ic')}<span class="gm-nm">${g.label}</span>`
+          + `<span class="gm-v">${giftVal(g)}💎</span>` + (g.sent ? `<span class="gm-pop">🔥${g.sent}</span>` : '')
+          + (isUsed ? `<span class="gm-used">en uso</span>` : '');
+        o.onclick = () => { if (isUsed){ alert(`"${g.label}" ya está asignado a otro competidor.`); return; } selectGift(p, g.key, trigger, row); };
+        list.appendChild(o);
+      });
+    };
+    build('');
+    search.oninput = () => build(search.value.trim().toLowerCase());
+    const r = trigger.getBoundingClientRect();
+    m.style.left = Math.round(r.left + window.scrollX) + 'px';
+    m.style.top  = Math.round(r.bottom + window.scrollY + 4) + 'px';
+    m.style.minWidth = Math.round(r.width) + 'px';
+    m.hidden = false; trigger.classList.add('open');
+    state._giftMenu = { p, trigger };
+    search.focus();
+  }
+  function selectGift(p, key, trigger, row){
+    p.gift = key; p._giftManual = true;
+    const inf = key && giftInfo(key); p.giftPts = inf ? giftVal(inf) : 1;
+    trigger.innerHTML = (key ? giftPhotoHTML(key, 'gp-ic') : `<span class="gp-ic gp-none">🎁</span>`)
+      + `<span class="gp-lb">${giftLabel(key)}</span><span class="gp-ar">▾</span>`;
+    const pin = row && row.querySelector('.pgiftpts'); if (pin) pin.value = p.giftPts;
+    closeGiftMenu();
   }
 
   function captureKey(player, btn){
@@ -593,18 +720,28 @@
     window.addEventListener('keydown', onKey, true);
   }
 
-  function toggleAll(v){ state.roster.forEach(p => p.on = v); renderRoster(); }
+  function toggleAll(v){
+    if (v && !state.teamMode){
+      // Todos contra todos: "Marcar todos" activa como MÁXIMO 12 competidores.
+      let n = 0;
+      state.roster.forEach(p => { const ok = n < MAX_INDIVIDUAL; p.on = ok; if (ok) n++; });
+    } else {
+      state.roster.forEach(p => p.on = v);
+    }
+    renderRoster();
+  }
 
   /* ---------- presets de enfrentamiento ---------- */
   function applyPreset(preset){
     if (preset === 'individual'){
       state.teamMode = false; $('#teamMode').checked = false; $('#teamCountRow').hidden = true;
-      // SOLO los que tienen regalo asignado (12 disponibles), así cada competidor del
-      // "todos contra todos" tiene su regalo y su foto. Si alguno ya tenía regalo manual, también.
-      const conRegalo = state.roster.filter(p => p.gift);
-      state.roster.forEach(p => p.on = !!p.gift);
-      // si por lo que sea ninguno tiene regalo (sin catálogo), deja todos como respaldo
-      if (!conRegalo.length) state.roster.forEach(p => p.on = true);
+      autoAssignGifts();                                  // todos del mismo valor (los más enviados)
+      // Todos contra todos: MÁXIMO 12 competidores (los 12 primeros que tienen regalo),
+      // así cada uno tiene su regalo único y su foto.
+      let n = 0;
+      state.roster.forEach(p => { p.on = !!p.gift && n < MAX_INDIVIDUAL; if (p.on) n++; });
+      // respaldo: si ninguno tiene regalo (sin catálogo), activa los primeros 12
+      if (n === 0) state.roster.forEach((p, i) => p.on = i < MAX_INDIVIDUAL);
       renderRoster(); return;
     }
     const n = +preset[0]; // 1v1->1, 3v3->3
@@ -615,6 +752,7 @@
       else if (i < 2*n){ p.on = true;  p.teamId = 2; }
       else             { p.on = false; }
     });
+    autoAssignGifts();                                    // equipos con valores espejo por puesto
     renderRoster();
   }
 
@@ -660,6 +798,11 @@
 
     const active = state.roster.filter(p => p.on);
     if (active.length < 2){ alert('Marca al menos 2 participantes 🙂'); return; }
+    // Todos contra todos: tope de 12 competidores.
+    if (!state.teamMode && active.length > MAX_INDIVIDUAL){
+      alert(`En "todos contra todos" el máximo es ${MAX_INDIVIDUAL} competidores. Tienes ${active.length} marcados; quita ${active.length - MAX_INDIVIDUAL}.`);
+      return;
+    }
 
     // teclas válidas y sin repetir
     const seen = new Map();
@@ -667,6 +810,18 @@
       if (!p.key){ alert(`${p.name} no tiene tecla asignada.`); return; }
       if (seen.has(p.key)){ alert(`La tecla "${niceKey(p.key)}" está repetida (${seen.get(p.key)} y ${p.name}).`); return; }
       seen.set(p.key, p.name);
+    }
+
+    // REGALOS sin repetir: cada regalo debe ser de UN SOLO competidor (sin regalo es válido).
+    const seenGift = new Map();
+    for (const p of active){
+      if (!p.gift) continue;
+      if (seenGift.has(p.gift)){
+        const inf = giftInfo(p.gift);
+        alert(`El regalo "${inf ? inf.label : p.gift}" está asignado a 2 competidores (${seenGift.get(p.gift)} y ${p.name}).\nCada regalo debe ser de un solo competidor: cámbialo en uno de ellos.`);
+        return;
+      }
+      seenGift.set(p.gift, p.name);
     }
 
     state.racers = computeRacers();
@@ -879,6 +1034,25 @@
     setTimeout(() => fx.remove(), 650);
   }
 
+  /* Efecto al puntuar en modo carriles (Banderas / Comidas): "+N" que sube flotando
+     y una ráfaga temática tras el corredor para dar sensación de acelerón.
+     El emoji de la ráfaga cambia según el juego (polvo en banderas, comida en cocina). */
+  const LANE_PUFF = { banderas:['💨'], comidas:['😋','🤤','🔥','✨'] };
+  function spawnLaneFx(r, n){
+    if (!r || !r.runnerEl) return;
+    const fx = document.createElement('span');
+    fx.className = 'lane-fx';
+    fx.textContent = '+' + n;
+    r.runnerEl.appendChild(fx);
+    setTimeout(() => fx.remove(), 750);
+    const puff = LANE_PUFF[game().id] || LANE_PUFF.banderas;
+    const dust = document.createElement('span');
+    dust.className = 'lane-dust';
+    dust.textContent = puff[(Math.random() * puff.length) | 0];
+    r.runnerEl.appendChild(dust);
+    setTimeout(() => dust.remove(), 600);
+  }
+
   function arenaFighter(r, side){
     // cada miembro en su propio <span class="amem"> -> formación (alineación) y el balón
     // puede ubicar a un jugador concreto para "pasárselo".
@@ -912,6 +1086,7 @@
     updatePositions();
     if (state._close) spawnPunch();                        // boxeo: golpe al estar cerca
     else if (state._arena && !state._boxeo) spawnFx(r);    // arena temática: efecto flotante al puntuar
+    else if (!state._arena && (game().id === 'banderas' || game().id === 'comidas')) spawnLaneFx(r, n);  // carriles: "+N" + ráfaga temática
     if (game().id === 'boxeo') SFX.punch();        // sonido de golpe en cada pegada
     else if (game().id === 'futbol') SFX.kick();   // patada al balón en cada gol
     else if (game().id === 'comidas') SFX.crunch(); // mordisco en cada punto
@@ -1419,11 +1594,13 @@
     $('#teamMode').onchange = e => {
       state.teamMode = e.target.checked;
       $('#teamCountRow').hidden = !state.teamMode;
+      autoAssignGifts();                                  // re-reparte según modo (individual/equipos)
       renderRoster();
     };
     $('#teamCount').onchange = e => {
       state.teamCount = +e.target.value;
       state.roster.forEach(p => { if (p.teamId > state.teamCount) p.teamId = state.teamCount; });
+      autoAssignGifts();                                  // valores espejo para el nuevo nº de equipos
       renderRoster();
     };
     addEventListener('resize', () => { const cv=$('#confetti'); if (cv){ cv.width=innerWidth; cv.height=innerHeight; } });

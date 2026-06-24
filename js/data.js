@@ -18,11 +18,11 @@ const GAMES = {
     scenario: 'cancha', finishLabel: '⚽ GOL',
     versusOnly: true,                       // solo DUELO (1v1/2v2/3v3); sin "todos contra todos"
     instructions: [
-      'Elige una categoría: Clubes de Latinoamérica o Jugadores del mundo.',
-      'Fútbol es un DUELO cara a cara: 1 vs 1, 2 vs 2 o 3 vs 3.',
-      'Cada pulsación (o regalo de TikTok) hace avanzar a tu lado +1.',
-      'En TikTok/TikFinity asigna un regalo a cada competidor.',
-      'Al acabar el tiempo, el lado con más puntos ¡gana!'
+      '⚽ Elige categoría: 🛡️ Clubes de Latinoamérica o ⭐ Jugadores del mundo.',
+      '⚔️ Duelo cara a cara: 1 vs 1, 2 vs 2 o 3 vs 3.',
+      '🎁 Cada regalo de TikTok suma +1 a ese lado (los comentarios y likes solo animan, no dan puntos).',
+      '⚙️ En TikFinity asigna un regalo a cada competidor.',
+      '🏆 Al acabar el tiempo gana el lado con más puntos.'
     ],
     categories: {
 
@@ -79,15 +79,14 @@ const GAMES = {
   /* ============================== BANDERA DE PAÍSES ============================== */
   banderas: {
     id: 'banderas', name: 'Bandera de Países', emoji: '🚩',
-    scenario: 'ruta', finishLabel: '🏁',
+    scenario: 'banderas', finishLabel: '🏁',
     avatar: 'flag',
     individualOnly: true,                   // SOLO "todos contra todos" (sin 1v1/2v2/3v3 ni equipos)
     instructions: [
-      'Cada país es un competidor con su BANDERA real.',
-      'Es TODOS CONTRA TODOS: corren a la meta en carriles.',
-      'Cada pulsación (o regalo de TikTok) hace avanzar al país +1.',
-      'En TikTok/TikFinity asigna un regalo a cada país.',
-      'El país más votado al acabar el tiempo ¡gana!'
+      '🚩 Cada país compite con su bandera real, en carriles (todos contra todos).',
+      '🎁 Cada regalo de TikTok hace avanzar a ese país +1 (los comentarios y likes solo animan, no dan puntos).',
+      '⚙️ En TikFinity asigna un regalo a cada país.',
+      '🏆 Gana quien tenga más puntos al acabar el tiempo (o el primero en llegar a la meta).'
     ],
     competitors: [
       { id: 'AR', name: 'Argentina',   sub: 'CONMEBOL', color: '#74ACDF' },
@@ -119,13 +118,13 @@ const GAMES = {
   comidas: {
     id: 'comidas', name: 'Comidas Típicas', emoji: '🍽️',
     scenario: 'cocina', finishLabel: '🏆',
-    avatar: 'photo',
+    avatar: 'photo',                        // FOTO real de cada plato (assets/fotos/F01..F18.jpg)
     individualOnly: true,                   // SOLO "todos contra todos" (como Banderas)
     instructions: [
-      'Cada plato típico (uno por país de Latinoamérica) es un competidor.',
-      'Cada pulsación de su tecla hace avanzar al plato +1.',
-      'Vota por tu comida favorita: ¡la más votada gana!',
-      'En TikFinity conecta cada regalo/comentario a la tecla de un plato.'
+      '🍽️ Cada plato típico de Latinoamérica compite en la cinta (todos contra todos).',
+      '🎁 Cada regalo de TikTok hace avanzar a ese plato +1 (los comentarios y likes solo animan, no dan puntos).',
+      '⚙️ En TikFinity asigna un regalo a cada plato.',
+      '🏆 La comida más votada al acabar el tiempo ¡gana!'
     ],
     competitors: [
       { id: 'F01', name: 'Tacos',       icon: '🌮', sub: 'México 🇲🇽',       color: '#F4A261' },
@@ -138,7 +137,7 @@ const GAMES = {
       { id: 'F08', name: 'Encebollado', icon: '🍲', sub: 'Ecuador 🇪🇨',      color: '#F4A300' },
       { id: 'F09', name: 'Pabellón',    icon: '🍛', sub: 'Venezuela 🇻🇪',    color: '#E9B500' },
       { id: 'F10', name: 'Salteña',     icon: '🥟', sub: 'Bolivia 🇧🇴',      color: '#C97B30' },
-      { id: 'F11', name: 'Sopa Paragua',icon: '🧀', sub: 'Paraguay 🇵🇾',     color: '#D9A441' },
+      { id: 'F11', name: 'Sopa Paraguaya',icon: '🧀', sub: 'Paraguay 🇵🇾',   color: '#D9A441' },
       { id: 'F12', name: 'Gallo Pinto', icon: '🍚', sub: 'Costa Rica 🇨🇷',   color: '#6A994E' },
       { id: 'F13', name: 'Baleada',     icon: '🌯', sub: 'Honduras 🇭🇳',     color: '#18C3DF' },
       { id: 'F14', name: 'Pupusa',      icon: '🫓', sub: 'El Salvador 🇸🇻',  color: '#2A9D8F' },
@@ -152,13 +151,14 @@ const GAMES = {
   /* ============================== BOXEO (boxeadores famosos de Latinoamérica) ============================== */
   boxeo: {
     id: 'boxeo', name: 'Boxeo', emoji: '🥊',
+    versusOnly: true,                       // solo DUELO (1v1/2v2/3v3); sin "todos contra todos"
     scenario: 'ring', finishLabel: '🥊 KO',
     avatar: 'photo',
     instructions: [
-      'Compiten los boxeadores más famosos de cada país de Latinoamérica.',
-      'Cada pulsación de su tecla es un golpe: +1.',
-      '¡El más votado gana el combate!',
-      'En TikFinity asigna cada regalo/like a la tecla de un boxeador.'
+      '🥊 Combaten los boxeadores más famosos: duelo 1 vs 1, 2 vs 2 o 3 vs 3.',
+      '🎁 Cada regalo de TikTok es un golpe: +1 a ese lado (los comentarios y likes solo animan, no dan puntos).',
+      '⚙️ En TikFinity asigna un regalo a cada boxeador.',
+      '🏆 Gana quien acumule más golpes (puntos) al acabar el tiempo.'
     ],
     competitors: [
       // México
@@ -200,10 +200,10 @@ const GAMES = {
     avatar: 'photo',
     hidden: true,                           // OCULTO (para una versión más adelante; no se borra)
     instructions: [
-      'Compiten las figuras de resistencia (ciclismo y maratón) de Latinoamérica.',
-      'Cada pulsación de su tecla lo impulsa +1.',
-      '¡El primero en llegar a la meta gana!',
-      'En TikFinity asigna cada acción del live a la tecla de un atleta.'
+      '🚴 Compiten las figuras de resistencia (ciclismo y maratón) de Latinoamérica y el mundo.',
+      '🎁 Cada regalo de TikTok lo impulsa +1 (los comentarios y likes solo animan, no dan puntos).',
+      '⚙️ En TikFinity asigna un regalo a cada atleta.',
+      '🏆 Gana quien llegue primero a la meta (o más puntos al acabar el tiempo).'
     ],
     competitors: [
       // Latinoamérica
@@ -239,10 +239,10 @@ const GAMES = {
     avatar: 'badge',
     hidden: true,                           // OCULTO (para una versión más adelante; no se borra)
     instructions: [
-      'Cada moto compite en el circuito.',
-      'Cada pulsación de su tecla acelera la moto +1.',
-      '¡La primera en cruzar la línea de meta gana!',
-      'En TikFinity asigna cada regalo/like a la tecla de una moto.'
+      '🏍️ Cada moto compite en el circuito.',
+      '🎁 Cada regalo de TikTok la acelera +1 (los comentarios y likes solo animan, no dan puntos).',
+      '⚙️ En TikFinity asigna un regalo a cada moto.',
+      '🏆 Gana la primera en cruzar la meta (o más puntos al acabar el tiempo).'
     ],
     competitors: [
       { id: 'M1', name: 'Rayo',   icon: '🏍️', sub: '#46 ⚡', color: '#FFBE0B' },

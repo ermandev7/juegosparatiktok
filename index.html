@@ -6,7 +6,7 @@
   <title>🏁 Carrera Live — TikFinity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=43" />
+  <link rel="stylesheet" href="css/styles.css?v=53" />
 </head>
 <body>
 
@@ -68,8 +68,9 @@
           <div class="card notice-card" id="noticeCard">
             <h2>ℹ️ Cómo se juega <small>(versión gratuita)</small></h2>
             <ul class="notice-list">
-              <li>🎁 En esta versión juegas con <b>10–12 regalos</b> de TikTok: cada uno vale <b>1 punto</b> y está asignado a un competidor.</li>
-              <li>🏆 Gana el competidor que <b>más puntos (regalos)</b> reciba durante la partida.</li>
+              <li>🎁 Cada regalo está asignado a un competidor y suma <b>según su valor en 💎</b> (un regalo de 10 suma 10 puntos).</li>
+              <li>⚖️ Para que sea justo: en <b>todos contra todos</b> los regalos son del <b>mismo valor</b>; en <b>versus</b>, cada equipo tiene regalos de <b>valores equivalentes</b>. Se priorizan los <b>más enviados</b> (🔥).</li>
+              <li>🏆 Gana el competidor que <b>más puntos</b> acumule durante la partida.</li>
               <li>💬❤️➕🔁 Los comentarios, likes, seguir y compartir <b>NO dan puntos</b>: solo animan el show (ruido del público, silbidos, tambores y el nombre del competidor gritado y en pantalla).</li>
               <li>🚀 <b>La próxima versión</b> llegará mucho más completa (más regalos, más modos y opciones) bajo una <b>suscripción</b>.</li>
             </ul>
@@ -123,12 +124,12 @@
           </label>
           <div class="time-presets" id="timePresets">
             <span>⏱️ Duración:</span>
-            <button type="button" class="btn ghost mini time-preset on" data-secs="60">1 min</button>
+            <button type="button" class="btn ghost mini time-preset" data-secs="60">1 min</button>
             <button type="button" class="btn ghost mini time-preset" data-secs="120">2 min</button>
             <button type="button" class="btn ghost mini time-preset" data-secs="180">3 min</button>
-            <button type="button" class="btn ghost mini time-preset" data-secs="300">5 min</button>
+            <button type="button" class="btn ghost mini time-preset on" data-secs="300">5 min</button>
             <span class="custom-secs">o</span>
-            <input type="number" id="durationSecs" value="60" min="10" max="3600" />
+            <input type="number" id="durationSecs" value="300" min="10" max="3600" />
             <span>seg</span>
           </div>
           <label class="radio">
@@ -162,9 +163,9 @@
       </div>
 
       <!-- Participantes -->
-      <div class="card">
+      <div class="card" id="rosterCard">
         <h2>Participantes y teclas
-          <small>Marca quién juega, edita su tecla (clic y pulsa) y, en modo equipos, asigna su equipo.</small>
+          <small>Marca quién juega, elige su regalo y, en modo equipos, asigna su equipo.</small>
         </h2>
         <div class="roster-tools">
           <button class="btn ghost mini" id="selectAll">Marcar todos</button>
@@ -222,8 +223,8 @@
     </div>
   </section>
 
-  <script src="js/data.js?v=43"></script>
-  <script src="js/tiktok.js?v=43"></script>
-  <script src="js/game.js?v=43"></script>
+  <script src="js/data.js?v=53"></script>
+  <script src="js/tiktok.js?v=53"></script>
+  <script src="js/game.js?v=53"></script>
 </body>
 </html>

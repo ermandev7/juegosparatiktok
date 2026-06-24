@@ -69,6 +69,34 @@
   /* Pool de regalos asignables: con catálogo oficial = curados + todos los oficiales. */
   function pool(){ return liveLoaded ? GIFT_CATALOG.concat(extras) : GIFT_CATALOG.slice(); }
 
+  /* Ranking de la BASE DE DATOS LOCAL (del servidor): regalos REALES vistos en los Lives,
+     con su frecuencia (`sent`). Enriquece el pool (valor/foto reales) y marca popularidad
+     para que el juego priorice los MÁS enviados. */
+  let lastStats = [];
+  function ingestStats(list){
+    lastStats = list || [];
+    GIFT_CATALOG.forEach(g => g.sent = 0);     // reinicia popularidad de los curados
+    extras.length = 0;
+    lastStats.forEach(s => {
+      const key = (s.id != null && idIndex[s.id]) || giftKeyFromName(s.name);
+      if (key && byKey[key]){                  // es un regalo curado -> enriquece
+        const g = byKey[key];
+        if (s.image) g.image = s.image;
+        if (s.diamonds != null) g.diamonds = s.diamonds;
+        if (s.id != null){ g.giftId = s.id; idIndex[s.id] = key; }
+        g.sent = (g.sent || 0) + (s.count || 0);
+      } else {                                  // regalo real no curado -> al pool
+        const k = s.id != null ? ('g' + s.id) : ('n' + norm(s.name));
+        const g = byKey[k] || (byKey[k] = { key: k, emoji: '🎁', label: s.name || 'Regalo', aliases: [norm(s.name)] });
+        g.label = s.name || g.label; g.diamonds = s.diamonds; g.coste = s.diamonds;
+        g.image = s.image || g.image || ''; g.giftId = s.id; g.sent = s.count || 0;
+        aliasIndex[norm(s.name)] = k; if (s.id != null) idIndex[s.id] = k;
+        extras.push(g);
+      }
+    });
+    if (lastStats.length) liveLoaded = true;    // ya conocemos regalos reales -> pool completo
+  }
+
   /* key del catalogo a partir de un regalo entrante: por ID oficial, si no por nombre. */
   function giftKeyFrom(m){ return (m.giftId != null && idIndex[m.giftId]) || giftKeyFromName(m.giftName); }
 
@@ -79,7 +107,7 @@
   }
 
   /* ---------- conexion WebSocket ---------- */
-  let ws = null, giftCb = null, statusCb = null, catalogCb = null;
+  let ws = null, giftCb = null, statusCb = null, catalogCb = null, statsCb = null;
   let commentCb = null, likeCb = null, followCb = null, shareCb = null, lastUser = '';
 
   function setStatus(state, msg){ if (statusCb) statusCb(state, msg); }
@@ -96,6 +124,7 @@
     ws.onmessage = (ev) => {
       let m; try { m = JSON.parse(ev.data); } catch { return; }
       if (m.type === 'status') setStatus(m.state, m.msg);
+      else if (m.type === 'giftstats'){ ingestStats(m.list); if (catalogCb) catalogCb(); if (statsCb) statsCb(lastStats); }
       else if (m.type === 'gifts'){ ingestLiveGifts(m.list); if (catalogCb) catalogCb(); }
       else if (m.type === 'gift' && giftCb){
         m.key = giftKeyFrom(m);                 // mapea al catalogo (por id oficial o nombre)
@@ -124,6 +153,8 @@
 
   /* simula la llegada del catalogo oficial (pruebas sin estar en vivo) */
   function simulateCatalog(list){ ingestLiveGifts(list); if (catalogCb) catalogCb(); }
+  /* simula el ranking de la BD local (pruebas sin estar en vivo) */
+  function simulateStats(list){ ingestStats(list); if (catalogCb) catalogCb(); if (statsCb) statsCb(lastStats); }
 
   /* simuladores de comentario / like (pruebas sin estar en vivo) */
   function simulateComment(text, user, uniqueId){
@@ -143,11 +174,14 @@
 
   window.TikTok = {
     GIFT_CATALOG, byKey, giftKeyFromName, giftImg, pool,
-    connect, disconnect, simulateGift, simulateCatalog, simulateComment, simulateLike,
+    connect, disconnect, simulateGift, simulateCatalog, simulateStats, simulateComment, simulateLike,
     simulateFollow, simulateShare, simulateStatus,
+    stats: () => lastStats,                    // ranking de la BD local (más enviado primero)
+    requestStats: () => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ cmd: 'getstats' })); },
     onGift:    cb => giftCb = cb,
     onStatus:  cb => statusCb = cb,
     onCatalog: cb => catalogCb = cb,
+    onStats:   cb => statsCb = cb,
     onComment: cb => commentCb = cb,
     onLike:    cb => likeCb = cb,
     onFollow:  cb => followCb = cb,

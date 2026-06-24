@@ -14,3 +14,8 @@ Thumbs.db
 
 # Privado (no publicar)
 biblioteca-regalos.md
+
+# Base de datos local de regalos (se genera en cada PC al jugar)
+gift-stats.json
+# Fotos de regalos descargadas a disco (se regeneran solas)
+gift-img/

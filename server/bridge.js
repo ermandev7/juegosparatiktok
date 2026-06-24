@@ -37,6 +37,133 @@ process.on('uncaughtException',  (e) => console.error('⚠️ uncaughtException:
 process.on('unhandledRejection', (e) => console.error('⚠️ unhandledRejection:', e && e.message || e));
 const ROOT = path.join(__dirname, '..');   // raiz del proyecto (un nivel arriba de /server)
 
+/* ---------- BASE DE DATOS LOCAL de regalos enviados ----------
+   Archivo JSON que va registrando CADA regalo recibido en los Lives:
+   cuántas veces se ha enviado (count), su valor (diamonds), foto y nombre.
+   Sirve para que el juego priorice los regalos MÁS enviados / populares.
+   Se guarda junto al .exe (o en la raíz del proyecto en desarrollo). */
+const DATA_DIR  = process.pkg ? path.dirname(process.execPath) : ROOT;
+const STATS_FILE = path.join(DATA_DIR, 'gift-stats.json');
+let giftStats = {};                          // { [giftId]: { id, name, diamonds, image, count, coins, last } }
+
+/* Carpeta donde se DESCARGAN las fotos de los regalos para que siempre carguen (sin depender
+   del CDN de TikTok, que puede caducar). Se sirve en /gift-img/.  "Foto sí o sí". */
+const IMG_DIR = path.join(DATA_DIR, 'gift-img');
+try { fs.mkdirSync(IMG_DIR, { recursive: true }); } catch (_) {}
+
+/* descarga la foto de un regalo a disco y devuelve su ruta local (/gift-img/<id>.png) */
+async function downloadGiftImage(id, url){
+  if (!url || !/^https?:/.test(url)) return null;
+  const name = String(id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
+  const file = path.join(IMG_DIR, name);
+  if (fs.existsSync(file) && fs.statSync(file).size > 0) return '/gift-img/' + name;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!buf.length) return null;
+    fs.writeFileSync(file, buf);
+    return '/gift-img/' + name;
+  } catch (_) { return null; }
+}
+/* baja a disco las fotos que aún son URL del CDN y reescribe la BD a rutas locales */
+function backfillImages(){
+  let pending = 0;
+  Object.values(giftStats).forEach(s => {
+    if (s.image && /^https?:/.test(s.image)){
+      pending++;
+      downloadGiftImage(s.id, s.image).then(local => { if (local){ s.image = local; saveStats(); } });
+    }
+  });
+  if (pending) console.log(`🖼️  BD: descargando ${pending} fotos de regalos a disco…`);
+}
+
+function loadStats(){
+  try { giftStats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8')).gifts || {}; }
+  catch (_) { giftStats = {}; }
+}
+
+/* Catálogo base (regalos conocidos con su FOTO local en assets/gifts/). Se SIEMBRA en la
+   base de datos al arrancar para que TODOS estén en el mismo lugar, aunque aún no se hayan
+   enviado en un Live. No duplica: si ya existe uno con el mismo nombre, no lo agrega. */
+const SEED_GIFTS = [
+  { id:'rose',      name:'Rose',           diamonds:1, image:'assets/gifts/rose.png' },
+  { id:'tiktok',    name:'TikTok',         diamonds:1, image:'assets/gifts/tiktok.png' },
+  { id:'gg',        name:'GG',             diamonds:1, image:'assets/gifts/gg.png' },
+  { id:'coffee',    name:'Coffee',         diamonds:1, image:'assets/gifts/coffee.png' },
+  { id:'icecream',  name:'Ice Cream Cone', diamonds:1, image:'assets/gifts/icecream.png' },
+  { id:'heartpuff', name:'Heart Puff',     diamonds:1, image:'assets/gifts/heartpuff.png' },
+  { id:'rainbow',   name:'Rainbow',        diamonds:1, image:'assets/gifts/rainbow.png' },
+  { id:'orange',    name:'Orange Juice',   diamonds:1, image:'assets/gifts/orange.png' },
+  { id:'cakeslice', name:'Cake Slice',     diamonds:1, image:'assets/gifts/cake.png' },
+  { id:'chili',     name:'Chili',          diamonds:1, image:'assets/gifts/chili.png' },
+  { id:'tomato',    name:'Tom the Tomato', diamonds:1, image:'assets/gifts/tomato.png' },
+  { id:'glowstick', name:'Glow Stick',     diamonds:1, image:'' },
+  { id:'finger',    name:'Finger Heart',   diamonds:5, image:'assets/gifts/finger.png' },
+  { id:'donut',     name:'Doughnut',       diamonds:1, image:'assets/gifts/donut.png' },
+  { id:'flower',    name:'Flowers',        diamonds:1, image:'assets/gifts/flower.png' },
+  { id:'heart',     name:'Heart',          diamonds:1, image:'assets/gifts/heart.png' },
+  { id:'star',      name:'Star',           diamonds:1, image:'assets/gifts/star.png' },
+  { id:'lion',      name:'Lion',           diamonds:29999, image:'assets/gifts/lion.png' },
+];
+function seedStats(){
+  let added = 0;
+  SEED_GIFTS.forEach(g => {
+    const exists = Object.values(giftStats).some(s => s.name && s.name.toLowerCase() === g.name.toLowerCase());
+    if (!exists){ giftStats[g.id] = { id:g.id, name:g.name, diamonds:g.diamonds, image:g.image||'', count:0, coins:0, last:0 }; added++; }
+  });
+  if (added){ console.log(`🌱 BD: sembrados ${added} regalos del catálogo (con foto).`); saveStats(); }
+}
+let saveTimer = null;
+function saveStats(){                         // guardado con "debounce" para no escribir en cada regalo
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    try { fs.writeFileSync(STATS_FILE, JSON.stringify({ gifts: giftStats }, null, 0)); }
+    catch (e) { console.error('⚠️ No se pudo guardar gift-stats.json:', e && e.message || e); }
+  }, 1500);
+}
+/* registra un regalo recibido (suma su frecuencia y monedas).
+   Localiza por id; si no, por NOMBRE (para FUSIONAR con el catálogo sembrado en vez de
+   crear un duplicado), y adopta el id numérico/ foto reales del Live. */
+function recordGift({ giftId, giftName, diamonds, image, count }){
+  const n = Math.max(1, Number(count) || 1);
+  let key = (giftId != null && giftStats[String(giftId)]) ? String(giftId) : null;
+  if (!key && giftName){
+    key = Object.keys(giftStats).find(k => giftStats[k].name && giftStats[k].name.toLowerCase() === String(giftName).toLowerCase());
+  }
+  if (!key) key = String(giftId || giftName || '').trim();
+  if (!key) return;
+  const s = giftStats[key] || (giftStats[key] = { id: giftId, name: giftName || '', diamonds: 0, image: '', count: 0, coins: 0, last: 0 });
+  if (giftId != null) s.id = giftId;            // adopta el id numérico real
+  if (giftName) s.name = giftName;
+  if (diamonds != null) s.diamonds = diamonds;
+  if (image) s.image = image;                   // prefiere la foto REAL del Live sobre la local
+  s.count += n;
+  s.coins += (Number(diamonds) || 0) * n;
+  s.last   = Date.now();
+  saveStats();
+  // descarga la foto a disco la 1ª vez (para que cargue siempre, sin depender del CDN)
+  if (s.image && /^https?:/.test(s.image)){
+    downloadGiftImage(s.id, s.image).then(local => { if (local){ s.image = local; saveStats(); broadcastStats(); } });
+  }
+}
+/* lista de regalos conocidos, del MÁS enviado al menos enviado */
+function statsList(){
+  return Object.values(giftStats)
+    .map(s => ({ id: s.id, name: s.name, diamonds: s.diamonds, image: s.image, count: s.count, coins: s.coins, last: s.last }))
+    .sort((a, b) => b.count - a.count);
+}
+loadStats();
+seedStats();                                   // asegura que TODO el catálogo esté en la BD (con foto)
+backfillImages();                              // baja a disco las fotos que aún sean del CDN
+// guardado final si se cierra el proceso
+['SIGINT','SIGTERM','exit'].forEach(ev => process.on(ev, () => {
+  if (saveTimer){ clearTimeout(saveTimer); saveTimer = null; }
+  try { fs.writeFileSync(STATS_FILE, JSON.stringify({ gifts: giftStats }, null, 0)); } catch (_) {}
+  if (ev !== 'exit') process.exit(0);
+}));
+
 /* ---------- 1) Servidor estatico del juego ---------- */
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -48,9 +175,11 @@ const MIME = {
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
-  const filePath = path.join(ROOT, path.normalize(urlPath));
-  // evita salir de la raiz
-  if (!filePath.startsWith(ROOT)) { res.writeHead(403); return res.end('Forbidden'); }
+  // las fotos de regalos descargadas viven en DATA_DIR (fuera del snapshot pkg, escribible)
+  const base = urlPath.startsWith('/gift-img/') ? DATA_DIR : ROOT;
+  const filePath = path.join(base, path.normalize(urlPath));
+  // evita salir de la carpeta
+  if (!filePath.startsWith(base)) { res.writeHead(403); return res.end('Forbidden'); }
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); return res.end('No encontrado'); }
     res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream' });
@@ -62,10 +191,17 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server });
 
 function sendTo(ws, obj) { try { ws.send(JSON.stringify(obj)); } catch (_) {} }
+function broadcastStats(){                    // avisa a todos los juegos abiertos del ranking actualizado
+  const list = statsList();
+  wss.clients.forEach(c => { if (c.readyState === 1) sendTo(c, { type: 'giftstats', list }); });
+}
+let statsBcTimer = null;
+function scheduleStatsBroadcast(){ if (statsBcTimer) return; statsBcTimer = setTimeout(() => { statsBcTimer = null; broadcastStats(); }, 1500); }
 
 wss.on('connection', (ws) => {
   let tiktok = null;                         // conexion al Live de este cliente
   console.log('🎮 Juego conectado al puente.');
+  sendTo(ws, { type: 'giftstats', list: statsList() });   // manda el ranking guardado al abrir el juego
 
   const cleanup = () => { if (tiktok) { try { tiktok.disconnect(); } catch (_) {} tiktok = null; } };
 
@@ -89,7 +225,7 @@ wss.on('connection', (ws) => {
         // combos (giftType 1): contar solo al terminar la racha, para no sumar de más.
         if (giftType === 1 && !data.repeatEnd) return;
         console.log(`🎁 GIFT name="${g.name || '?'}" id=${data.giftId} type=${giftType} x${data.repeatCount || 1} de ${uName(data.user)}`);
-        sendTo(ws, {
+        const giftMsg = {
           type:     'gift',
           giftId:   Number(data.giftId) || data.giftId,
           giftName: g.name || '',
@@ -99,7 +235,11 @@ wss.on('connection', (ws) => {
           uniqueId: uId(data.user),
           avatar:   img0(data.user && data.user.avatarThumb),
           picture:  img0(g.image) || img0(g.icon),
-        });
+        };
+        sendTo(ws, giftMsg);
+        // BD local: registra el regalo (frecuencia + valor) y avisa el ranking actualizado
+        recordGift({ giftId: giftMsg.giftId, giftName: giftMsg.giftName, diamonds: giftMsg.diamonds, image: giftMsg.picture, count: giftMsg.count });
+        scheduleStatsBroadcast();
       });
 
       // COMENTARIO del chat: el texto está en data.content (no data.comment).
@@ -169,6 +309,9 @@ wss.on('connection', (ws) => {
         console.error('❌ Error al conectar:', e && e.message || e);
       }
     }
+
+    /* --- el juego pide el ranking de regalos guardado --- */
+    if (msg.cmd === 'getstats') { sendTo(ws, { type: 'giftstats', list: statsList() }); }
 
     /* --- desconectar --- */
     if (msg.cmd === 'disconnect') {
