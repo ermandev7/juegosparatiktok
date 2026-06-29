@@ -190,6 +190,16 @@ const GAMES = {
       { id: 'PAC', name: 'Pacquiao',       abbr: 'PAC', sub: 'Filipinas 🇵🇭',   color: '#0038A8', wiki: 'Manny_Pacquiao' },
       { id: 'GGG', name: 'Golovkin',       abbr: 'GGG', sub: 'Kazajistán 🇰🇿',  color: '#00AFCA', wiki: 'Gennadi_Golovkin' },
       { id: 'KLI', name: 'Klitschko',      abbr: 'KLI', sub: 'Ucrania 🇺🇦',     color: '#FFD500', wiki: 'Vitali_Klitschko' },
+      // España / Georgia
+      { id: 'TOP', name: 'Ilia Topuria',    abbr: 'TOP', sub: 'España 🇪🇸',       color: '#AA151B', wiki: 'Ilia_Topuria' },
+      // Estrellas actuales
+      { id: 'BNV', name: 'David Benavidez',  abbr: 'BNV', sub: 'EE.UU./Méx 🇲🇽',   color: '#1565C0', wiki: 'David_Benavidez' },
+      { id: 'BET', name: 'Artur Beterbiev',  abbr: 'BET', sub: 'Rusia 🇷🇺',        color: '#B71C1C', wiki: 'Artur_Beterbiev' },
+      { id: 'BIV', name: 'Dmitry Bivol',     abbr: 'BIV', sub: 'Rusia 🇷🇺',        color: '#0039A6', wiki: 'Dmitry_Bivol' },
+      { id: 'INO', name: 'Naoya Inoue',      abbr: 'INO', sub: 'Japón 🇯🇵',        color: '#BC002D', wiki: 'Naoya_Inoue' },
+      { id: 'USY', name: 'Oleksandr Usyk',   abbr: 'USY', sub: 'Ucrania 🇺🇦',      color: '#0057B7', wiki: 'Oleksandr_Usyk' },
+      { id: 'SHA', name: 'Shakur Stevenson', abbr: 'SHA', sub: 'EE.UU. 🇺🇸',       color: '#4527A0', wiki: 'Shakur_Stevenson' },
+      { id: 'BAM', name: 'Bam Rodríguez',    abbr: 'BAM', sub: 'EE.UU. 🇺🇸',       color: '#00897B', wiki: 'Jesse_Rodriguez' },
     ]
   },
 

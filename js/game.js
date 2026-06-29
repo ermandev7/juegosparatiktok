@@ -391,6 +391,55 @@
     return badgeHTML(c, size);
   }
 
+  /* MUÑEQUITO "pateador" (estilo Mii/stick): figurita que TROTA y, al puntuar
+     (regalo o tecla), PATEA el balón hacia el arco. Lleva la bandera/foto como
+     distintivo. Reemplaza al avatar plano en los carriles de fútbol (banderas/comidas). */
+  function kickerHTML(r){
+    const sign = r.members.map(m => avatarHTML(m, 'sm')).join('');
+    // figura de PERFIL mirando a la DERECHA (sentido de avance, hacia el arco):
+    // torso inclinado al frente + zancada horizontal -> se lee "corriendo hacia adelante".
+    return `<span class="kicker" style="--jersey:${r.color}">
+        <span class="k-ball">⚽</span>
+        <svg class="k-fig" viewBox="0 0 48 66" aria-hidden="true">
+          <g class="kl kl-b"><line class="leg" x1="20" y1="40" x2="20" y2="60"/></g>
+          <line class="ktorso" x1="18" y1="42" x2="28" y2="21"/>
+          <g class="karm"><line class="arm" x1="26" y1="25" x2="35" y2="30"/></g>
+          <g class="kl kl-f"><line class="leg" x1="21" y1="40" x2="21" y2="60"/></g>
+          <circle class="khead" cx="30" cy="13" r="8.6"/>
+        </svg>
+        <span class="k-sign">${sign}</span>
+      </span>`;
+  }
+
+  /* MUÑEQUITO de ARENA (boxeo / fútbol-versus): igual idea, pero la CABEZA es la
+     FOTO real del competidor. Fútbol = patea el balón; boxeo = lanza golpe con guante.
+     Mira hacia el centro gracias al --flip de la formación (.amem). */
+  function arenaMuñeco(m, gid){
+    const head  = avatarHTML(m, 'lg');                 // foto/insignia/emoji -> cabeza
+    const jersey = m.color || '#8a8a8a';
+    if (gid === 'boxeo'){
+      return `<span class="amk boxer" style="--jersey:${jersey}">
+          <svg class="k-fig" viewBox="0 0 48 70" aria-hidden="true">
+            <g class="kl kl-b"><line class="leg" x1="20" y1="40" x2="16" y2="62"/></g>
+            <g class="kl kl-f"><line class="leg" x1="24" y1="40" x2="28" y2="62"/></g>
+            <line class="ktorso" x1="22" y1="24" x2="22" y2="42"/>
+            <g class="karm karm-b"><line class="arm" x1="22" y1="29" x2="30" y2="33"/><circle class="glove" cx="31" cy="33" r="5.5"/></g>
+            <g class="karm karm-f"><line class="arm" x1="22" y1="28" x2="33" y2="29"/><circle class="glove" cx="34" cy="29" r="5.5"/></g>
+          </svg>
+          <span class="amk-head">${head}</span>
+        </span>`;
+    }
+    return `<span class="amk kik" style="--jersey:${jersey}">
+        <svg class="k-fig" viewBox="0 0 48 66" aria-hidden="true">
+          <g class="kl kl-b"><line class="leg" x1="20" y1="40" x2="20" y2="60"/></g>
+          <line class="ktorso" x1="18" y1="42" x2="28" y2="21"/>
+          <g class="karm"><line class="arm" x1="26" y1="25" x2="35" y2="30"/></g>
+          <g class="kl kl-f"><line class="leg" x1="21" y1="40" x2="21" y2="60"/></g>
+        </svg>
+        <span class="amk-head">${head}</span>
+      </span>`;
+  }
+
   /* ---------- acceso a datos ---------- */
   const game = () => GAMES[state.gameId];
   function sourceList(){
@@ -462,7 +511,7 @@
     // - individualOnly (Bandera de Países): se OCULTAN 1v1/2v2/3v3 y el modo equipos;
     //   queda solo "Todos contra todos" y arranca ahí (solo los que tienen regalo).
     const indivBtn = document.querySelector('.preset[data-preset="individual"]');
-    const versusBtns = ['1v1','2v2','3v3'].map(k => document.querySelector(`.preset[data-preset="${k}"]`));
+    const versusBtns = ['1v1','2v2','3v3','5v5','7v7'].map(k => document.querySelector(`.preset[data-preset="${k}"]`));
     const teamToggle = document.querySelector('.team-toggle');
     // reset (se comparten entre juegos): mostrar todo y luego ocultar según el juego
     if (indivBtn) indivBtn.style.display = '';
@@ -478,6 +527,11 @@
       $('#teamCountRow').hidden = true;
       applyPreset('individual');
     }
+    // 5v5 y 7v7: SOLO en Fútbol (equipos grandes en formación); en boxeo/otros se ocultan.
+    ['5v5','7v7'].forEach(k => {
+      const b = document.querySelector(`.preset[data-preset="${k}"]`);
+      if (b && g.id !== 'futbol') b.style.display = 'none';
+    });
 
     show('setup');
   }
@@ -812,7 +866,16 @@
       seen.set(p.key, p.name);
     }
 
-    // REGALOS sin repetir: cada regalo debe ser de UN SOLO competidor (sin regalo es válido).
+    // REGALO OBLIGATORIO: todo competidor SELECCIONADO debe tener su regalo asignado
+    // (si no, no podría recibir puntos). No se puede empezar con alguno "sin regalo".
+    const sinRegalo = active.filter(p => !p.gift);
+    if (sinRegalo.length){
+      const nombres = sinRegalo.map(p => p.name).join(', ');
+      alert(`No se puede empezar: estos competidores están seleccionados pero SIN regalo asignado:\n\n${nombres}\n\nAsígnales un regalo a cada uno (o quítalos de la selección) para poder jugar.`);
+      return;
+    }
+
+    // REGALOS sin repetir: cada regalo debe ser de UN SOLO competidor.
     const seenGift = new Map();
     for (const p of active){
       if (!p.gift) continue;
@@ -858,6 +921,7 @@
     SFX.crowd.start(game().id);                            // ambiente de público (sube con likes/compartidos)
     state.running = true; state.paused = false; state.startTs = performance.now();
     window.addEventListener('keydown', onGameKey, true);
+    if (state._demo) startDemoFeed();                      // modo prueba: regalos automáticos
     loop();
   }
 
@@ -891,6 +955,9 @@
 
       const avas = r.members.map(m => avatarHTML(m,'sm')).join('');
       const runnerAvas = r.members.map(m => avatarHTML(m,'lg')).join('');
+      // fútbol-carril (banderas/comidas): muñequito que trota y patea; resto: avatar plano
+      const useKicker = (g.id === 'banderas' || g.id === 'comidas');
+      const runnerInner = useKicker ? kickerHTML(r) : `<span class="ava">${runnerAvas}</span>`;
 
       lane.innerHTML = `
         <div class="info">
@@ -899,7 +966,7 @@
           <div class="meta"><div class="nm">${r.name}</div><div class="sub">${r.sub||''}</div></div>
           <span class="score">0</span>
         </div>
-        <div class="strip"><i class="pfill"></i><div class="runner"><span class="ava">${runnerAvas}</span></div></div>`;
+        <div class="strip"><i class="pfill"></i><div class="runner">${runnerInner}</div></div>`;
       track.appendChild(lane);
       r.runnerEl = $('.runner', lane);
       r.scoreEl  = $('.info .score', lane);
@@ -911,7 +978,9 @@
   /* Config de arena por juego: clase de tema, icono central (sigue al líder),
      decoración lateral y efectos flotantes al puntuar. Boxeo es especial (choque). */
   const ARENA = {
-    futbol: { cls:'arena-cancha', icon:'⚽', side:'🥅', fx:['⚽','¡GOL!','🔥'] },
+    // OJO: el efecto al puntuar NO debe incluir ⚽ -> habría DOS balones (el real
+    // que rueda + el flotante). Solo letreros/llamas; el balón es único (state._ball).
+    futbol: { cls:'arena-cancha', icon:'⚽', side:'🥅', fx:['¡GOL!','🔥','⚡','¡GOOOL!'] },
     boxeo:  { cls:'arena-ring',   icon:'🏆', side:'🥊', fx:['💥','🥊','POW!'], boxeo:true },
   };
 
@@ -932,8 +1001,8 @@
     track.innerHTML = `
       <div class="arena-field">
         <div class="vs-names">
-          <div class="vs-name vn-l" style="--c:${shade(a.color,8)}"><span class="nm">${a.name}</span><span class="sc">0</span></div>
-          <div class="vs-name vn-r" style="--c:${shade(b.color,8)}"><span class="sc">0</span><span class="nm">${b.name}</span></div>
+          <div class="vs-name vn-l" style="--c:${shade(a.color,8)}"><span class="nm">${a.name}</span><span class="sc">0</span><span class="rw" hidden></span></div>
+          <div class="vs-name vn-r" style="--c:${shade(b.color,8)}"><span class="rw" hidden></span><span class="sc">0</span><span class="nm">${b.name}</span></div>
         </div>
         <div class="vs-crown">👑</div>
         <div class="aprog aprog-l" style="--c:${shade(a.color,8)}"><i></i></div>
@@ -964,7 +1033,103 @@
     b._memEls = [...b.runnerEl.querySelectorAll('.amem')];
     state._ballTargetEl = null; state._passIdx = 0; state._passT = 0;
     state._halftimeDone = false;
+    state._rounds = false;
     updatePositions();
+    if (boxeo) initBoxRounds();        // boxeo: combate por rounds (3 min · primero en 5 gana)
+  }
+
+  /* ============================================================
+     BOXEO POR ROUNDS — cada round dura 3 min; gana el round quien más anota EN ESE
+     round; el primero en ganar 5 rounds gana el combate. Entre rounds sale la chica
+     del ring con el cartel "ROUND N", letras grandes y la campana de inicio.
+     ============================================================ */
+  const ROUND_DUR = 180;       // 3 minutos por round
+  const ROUNDS_TO_WIN = 5;     // primero en ganar 5 rounds gana el combate
+  const BREAK_MS = 5000;       // descanso entre rounds (sale la modelo con el cartel)
+
+  function initBoxRounds(){
+    state._rounds = true;
+    state._roundNum = 0;
+    state._roundBreak = false;
+    state.racers.forEach(r => { r.rounds = 0; r.roundBase = 0; });
+    updateRoundPips();
+    beginRound(1);
+  }
+
+  /* Pips de rounds ganados (●●○○○) junto a cada nombre del marcador. */
+  function updateRoundPips(){
+    const [a, b] = state.racers;
+    const pip = n => '●'.repeat(n) + '○'.repeat(Math.max(0, ROUNDS_TO_WIN - n));
+    const lw = $('.vn-l .rw'), rw = $('.vn-r .rw');
+    if (lw){ lw.hidden = false; lw.textContent = pip(a.rounds); }
+    if (rw){ rw.hidden = false; rw.textContent = pip(b.rounds); }
+  }
+
+  /* Empieza el round n: descanso con la modelo + cartel grande, luego campana y a pelear. */
+  function beginRound(n){
+    state._roundNum = n;
+    state._roundBreak = true;                          // congela el cronómetro durante el descanso
+    $('#hudGoal').classList.remove('warn');
+    $('#hudGoal').textContent = `🥊 Round ${n}`;
+    spawnRingGirl(n);                                  // modelo da una vuelta al ring con el cartel
+    spawnCenterBanner(`ROUND ${n}`, 'round');          // letras grandes
+    if (state._field) state._field.classList.add('resting');
+    updatePositions();                                 // boxeadores caminan a sus esquinas
+    clearTimeout(state._roundTimer);
+    state._roundTimer = setTimeout(() => {
+      if (!state.running) return;
+      state._roundBreak = false;
+      if (state._field) state._field.classList.remove('resting');
+      state.racers.forEach(r => { r.roundBase = r.score; });   // el round cuenta desde aquí
+      state._roundStartTs = performance.now();
+      updatePositions();                                       // se acercan al centro del ring
+      SFX.bell();                                              // campana: ¡a pelear!
+    }, BREAK_MS);
+  }
+
+  /* Fin del round: gana quien más anotó EN EL ROUND; el primero en 5 gana el combate. */
+  function endRound(){
+    state._roundBreak = true;                          // detiene el conteo mientras se resuelve
+    const [a, b] = state.racers;
+    const da = a.score - a.roundBase, db = b.score - b.roundBase;
+    SFX.bellEnd();                                     // campana de fin de round
+    let rw = null;
+    if (da !== db){ rw = da > db ? a : b; rw.rounds++; }
+    updateRoundPips();                                 // el ● en el marcador indica quién ganó el round
+    updatePositions();                                 // suena la campana y van a sus esquinas
+    if (rw && rw.rounds >= ROUNDS_TO_WIN){ state._matchWinner = rw; setTimeout(() => { if (state.running) endGame(); }, 1500); return; }
+    setTimeout(() => { if (state.running) beginRound(state._roundNum + 1); }, 1500);
+  }
+
+  /* Chica del ring: figurita estilizada que entra con un cartel "ROUND N" en alto,
+     lo muestra en el centro y se retira. Aparece en cada cambio de round. */
+  function spawnRingGirl(n){
+    if (!state._field) return;
+    const old = state._field.querySelector('.ring-girl'); if (old) old.remove();
+    const g = document.createElement('div');
+    g.className = 'ring-girl';
+    g.innerHTML = `
+      <div class="rg-card"><span>ROUND</span><b>${n}</b></div>
+      <svg class="rg-fig" viewBox="0 0 60 126" aria-hidden="true">
+        <g class="rg-legs">
+          <line class="rg-leg rg-leg-b" x1="30" y1="92" x2="22" y2="118"/>
+          <line class="rg-leg rg-leg-f" x1="30" y1="92" x2="38" y2="118"/>
+        </g>
+        <path class="rg-dress" d="M30 50 L17 94 L43 94 Z"/>
+        <!-- DOS brazos levantados que sostienen el cartel (manos en las esquinas) -->
+        <line class="rg-arm" x1="24" y1="52" x2="18" y2="15"/>
+        <line class="rg-arm" x1="36" y1="52" x2="42" y2="15"/>
+        <circle class="rg-hand" cx="18" cy="14" r="3.6"/>
+        <circle class="rg-hand" cx="42" cy="14" r="3.6"/>
+        <circle class="rg-head" cx="30" cy="40" r="10"/>
+        <path class="rg-hair" d="M19 40 Q19 25 30 25 Q41 25 41 40 Q41 32 36 30 Q33 35 24 33 Q20 35 19 40 Z"/>
+        <!-- cara: ojos + sonrisa -->
+        <circle class="rg-eye" cx="26.5" cy="40" r="1.3"/>
+        <circle class="rg-eye" cx="33.5" cy="40" r="1.3"/>
+        <path class="rg-smile" d="M26 44 Q30 48 34 44"/>
+      </svg>`;
+    state._field.appendChild(g);
+    setTimeout(() => g.remove(), BREAK_MS - 150);
   }
 
   /* Versus: desliza la corona al lado del que va ganando, con salto al cambiar.
@@ -1056,7 +1221,27 @@
   function arenaFighter(r, side){
     // cada miembro en su propio <span class="amem"> -> formación (alineación) y el balón
     // puede ubicar a un jugador concreto para "pasárselo".
-    const avas = r.members.map((m,i) => `<span class="amem" data-mem="${i}">${avatarHTML(m, 'lg')}</span>`).join('');
+    // MOVIMIENTO INDIVIDUAL: cada muñequito trota/rebota con su PROPIA fase (--delay)
+    // Y su PROPIA velocidad (--dur piernas, --bdur rebote). Al variar la duración no
+    // se vuelven a sincronizar nunca -> cada uno se mueve por su cuenta.
+    const BOB = ['idleA','idleB','idleC','idleD'];          // rebote/lean en sitio (rápido)
+    const WAN = ['wanderA','wanderB','wanderC','wanderD'];  // deriva por la cancha (lenta)
+    const avas = r.members.map((m,i) => {
+      const delay = -(i * 0.17 + (side === 'r' ? 0.09 : 0)).toFixed(2);
+      const dur  = (0.42 + (i % 5) * 0.045).toFixed(2);   // trote: 0.42s .. 0.60s
+      const bdur = (0.72 + (i % 4) * 0.08).toFixed(2);    // rebote: 0.72s .. 0.96s
+      const bob  = BOB[(i + (side === 'r' ? 2 : 0)) % BOB.length];  // patrón propio (vecinos distintos)
+      // DERIVA INDIVIDUAL (capa .amk-wander): cada jugador se desplaza un poco por
+      // su cuenta — uno avanza, otro casi quieto, otro lo sigue — pero la amplitud
+      // es chica para NO romper la alineación. Patrón, velocidad y fase propios.
+      const wan   = WAN[(i * 3 + (side === 'r' ? 1 : 0)) % WAN.length];
+      const wdur  = (2.6 + (i % 4) * 0.7).toFixed(1);     // 2.6s .. 4.7s (cada uno a su paso)
+      const wdelay = -(i * 0.55).toFixed(2);
+      return `<span class="amem" data-mem="${i}" style="--delay:${delay}s; --dur:${dur}s; --bdur:${bdur}s; --bobname:${bob}">`
+        + `<span class="amk-wander" style="--wander:${wan}; --wdur:${wdur}s; --wdelay:${wdelay}s">`
+        + arenaMuñeco(m, game().id)
+        + `</span></span>`;
+    }).join('');
     const keys = r.members.map(m => `<span class="key">${niceKey(m.key)}</span>`).join('');
     const formCls = ' form-' + r.members.length;   // form-1 / form-2 / form-3
     return `
@@ -1081,13 +1266,19 @@
   function addPoint(r, n = 1){
     if (!state.running || state.paused || !r) return;
     r.score += n;
-    r.runnerEl.classList.add('bump');
-    setTimeout(() => r.runnerEl && r.runnerEl.classList.remove('bump'), 280);
+    // BOXEO en descanso: los puntos cuentan pero NADIE pelea (están en sus esquinas);
+    // sin golpe ni "bump" hasta que suene la campana del siguiente round.
+    const resting = state._rounds && state._roundBreak;
+    if (!resting){
+      r.runnerEl.classList.add('bump');
+      setTimeout(() => r.runnerEl && r.runnerEl.classList.remove('bump'), 280);
+    }
     updatePositions();
-    if (state._close) spawnPunch();                        // boxeo: golpe al estar cerca
+    if (resting){ /* en la esquina: sin FX de pelea */ }
+    else if (state._close) spawnPunch();                   // boxeo: golpe al estar cerca
     else if (state._arena && !state._boxeo) spawnFx(r);    // arena temática: efecto flotante al puntuar
     else if (!state._arena && (game().id === 'banderas' || game().id === 'comidas')) spawnLaneFx(r, n);  // carriles: "+N" + ráfaga temática
-    if (game().id === 'boxeo') SFX.punch();        // sonido de golpe en cada pegada
+    if (game().id === 'boxeo'){ if (!resting) SFX.punch(); }  // golpe solo si están peleando
     else if (game().id === 'futbol') SFX.kick();   // patada al balón en cada gol
     else if (game().id === 'comidas') SFX.crunch(); // mordisco en cada punto
     else if (game().id === 'resistencia') SFX.pedal(); // pedaleo/zancada en cada avance
@@ -1174,17 +1365,9 @@
     SFX.crowd.bump(1.3);                                    // SOLO anima al público, no suma puntos
   }
 
-  /* Aviso flotante genérico para comentario / like (reusa el estilo del toast de regalo). */
-  function showActionToast(kind, icon, user, label, racer, pts){
-    const scene = $('#scene'); if (!scene) return;
-    const t = document.createElement('div');
-    t.className = 'gift-toast act-' + kind;
-    t.innerHTML = `<span class="gt-photo as-em">${icon}</span>
-      <span class="gt-tx"><b>${esc(user || 'alguien')}</b> ${label}
-      <span class="gt-to">→ ${racer.name} <b>+${pts}</b></span></span>`;
-    scene.appendChild(t);
-    setTimeout(() => t.remove(), 3200);
-  }
+  /* Sin aviso flotante de comentario/like/seguir: se quitan los carteles bajo el
+     reloj (TikTok ya los muestra). El "grito de nombre" del comentario es aparte. */
+  function showActionToast(_kind, _icon, _user, _label, _racer, _pts){ /* no-op a propósito */ }
 
   /* <img> de la foto del regalo, con respaldo al emoji si la imagen falla. */
   function giftPhotoHTML(key, cls){
@@ -1259,28 +1442,32 @@
   }
 
   /* Aviso flotante: quién envió qué regalo (con su foto) y a quién apoya. */
-  function showGiftToast(g){
-    const scene = $('#scene'); if (!scene) return;
-    const info  = giftInfo(g.key);
-    const entry = g.key ? state.giftMap.get(g.key) : null;
-    const t = document.createElement('div');
-    t.className = 'gift-toast';
-    const total = entry ? entry.pts * (g.count || 1) : 0;
-    const who   = entry ? `<span class="gt-to">→ ${entry.racer.name} <b>+${total}</b></span>` : '';
-    const photo = info ? giftPhotoHTML(g.key, 'gt-photo') : '<span class="gt-photo as-em">🎁</span>';
-    t.innerHTML = `${photo}<span class="gt-tx"><b>${g.user || 'alguien'}</b> envió ${info ? info.label : (g.giftName || 'un regalo')}${g.count > 1 ? ' ×' + g.count : ''} ${who}</span>`;
-    scene.appendChild(t);
-    setTimeout(() => t.remove(), 3200);
+  // Sin aviso flotante de regalo: TikTok Live YA muestra quién envió qué.
+  // La reacción del juego (suma de puntos + animación) la maneja onGift/addPoint.
+  function showGiftToast(_g){ /* no-op a propósito */ }
+
+  // qué tan avanzado va un competidor (0..1) según el modo de victoria:
+  // - meta: lineal hacia la meta (gradual por diseño).
+  // - tiempo + arena (duelo): relativo al líder (boxeo/fútbol versus).
+  // - tiempo + carriles (todos contra todos): AVANCE GRADUAL asintótico -> cada
+  //   regalo suma un pasito; nunca te teletransporta al final con un solo regalo.
+  const GRAD_K = 14;
+  function progressOf(r, maxScore){
+    if (state.winmode === 'meta') return Math.min(1, r.score / state.target);
+    if (state._arena)            return Math.min(1, r.score / Math.max(maxScore, 1));
+    return r.score / (r.score + GRAD_K);
   }
 
   function updatePositions(){
     const maxScore = Math.max(1, ...state.racers.map(r => r.score));
-    const ref = state.winmode === 'meta' ? state.target : Math.max(maxScore, 1);
     let leader = null;
     state.racers.forEach(r => {
-      const pct = Math.min(1, r.score / ref);
+      const pct = progressOf(r, maxScore);
       if (state._arena && state._boxeo){
-        const off = (9 + pct * 33) + '%';   // boxeo: de cada borde hacia el centro (para el choque)
+        // DESCANSO entre rounds: cada boxeador camina a SU esquina (arriba-izq / arriba-der)
+        // y se queda ahí; al reanudar vuelven al centro según su puntaje (para el choque).
+        const off = state._roundBreak ? '9%' : (9 + pct * 33) + '%';
+        r.runnerEl.style.top = state._roundBreak ? '26%' : '';   // a la esquina alta / al centro
         if (r.runnerEl.dataset.side === 'l'){ r.runnerEl.style.left = off; r.runnerEl.style.right = 'auto'; }
         else { r.runnerEl.style.right = off; r.runnerEl.style.left = 'auto'; }
       } else if (!state._arena){
@@ -1299,6 +1486,39 @@
     if (state._arena && !state._boxeo) updateFutbolArena();
     moveArenaCrown();
     arenaClashUpdate();
+    updatePodium();
+  }
+
+  /* PODIO Top-3 en vivo (solo en "todos contra todos": banderas/comidas).
+     Orden visual 2º-1º-3º (el campeón al centro, más grande). Solo se reconstruye
+     cuando cambia QUIÉN está en el podio; si no, solo refresca los puntos. */
+  let _podKey = '';
+  function updatePodium(){
+    const pod = $('#podium');
+    if (!pod) return;
+    if (state._arena || state.racers.length < 3){ pod.hidden = true; _podKey = ''; return; }
+    pod.hidden = false;
+    const top = [...state.racers].sort((a, b) => b.score - a.score).slice(0, 3);
+    const medals = ['🥇','🥈','🥉'];
+    const order  = [1, 0, 2];                       // columna izq=2º, centro=1º, der=3º
+    const key = top.map(r => r.id).join('|');
+    if (key !== _podKey){
+      _podKey = key;
+      pod.innerHTML = order.map(i => {
+        const r = top[i]; if (!r) return '';
+        return `<div class="pod-slot pod-rank-${i+1}" data-pid="${r.id}">
+            <span class="pod-medal">${medals[i]}</span>
+            <span class="pod-ava">${avatarHTML(r.members[0], 'sm')}</span>
+            <span class="pod-sc">${r.score}</span>
+          </div>`;
+      }).join('');
+    } else {
+      order.forEach(i => {
+        const r = top[i]; if (!r) return;
+        const el = pod.querySelector(`.pod-slot[data-pid="${r.id}"] .pod-sc`);
+        if (el) el.textContent = r.score;
+      });
+    }
   }
 
   /* Fútbol (duelo): "tira y afloja". El que va ganando empuja la línea de juego
@@ -1322,10 +1542,10 @@
   }
 
   /* Cartel grande y breve en el centro (medio tiempo, etc.) */
-  function spawnCenterBanner(text){
+  function spawnCenterBanner(text, variant){
     const scene = $('#scene'); if (!scene) return;
     const el = document.createElement('div');
-    el.className = 'center-banner';
+    el.className = 'center-banner' + (variant ? ' cb-' + variant : '');
     el.textContent = text;
     scene.appendChild(el);
     setTimeout(() => el.remove(), 2200);
@@ -1396,7 +1616,10 @@
       const rr = targetEl.getBoundingClientRect();
       tx = ((rr.left + rr.width / 2 - fr.left) / fr.width)  * 100;
       ty = ((rr.top  + rr.height / 2 - fr.top) / fr.height) * 100;
-      tx += owner.side === 'l' ? 7 : -7;    // un poco hacia el arco rival (driblando)
+      // el balón guarda una DISTANCIA fija del jugador (no encima): un poco
+      // por DELANTE (hacia el arco rival) y a la altura de los PIES.
+      tx += owner.side === 'l' ? 9 : -9;
+      ty += 9;
     }
     tx = clamp(tx, 4, 96); ty = clamp(ty, 12, 88);
 
@@ -1414,8 +1637,14 @@
         nx = state._ballDash.fx + (tx - state._ballDash.fx) * e;
         ny = state._ballDash.fy + (ty - state._ballDash.fy) * e;
       }
+    } else if (owner){
+      // DOMINADAS: el que va ganando hace malabares -> el balón rebote verticalmente
+      // sobre sus pies (sube y baja). Se lo van pasando entre compañeros (3v3, 5v5, 7v7).
+      const jug = -9 * Math.abs(Math.sin(now / 230));
+      nx = curX + (tx - curX) * 0.6;
+      ny = curY + ((ty + jug) - curY) * 0.6;
     } else {
-      nx = curX + (tx - curX) * 0.6;                         // pegado: sigue de cerca el vaivén
+      nx = curX + (tx - curX) * 0.6;                         // empate/0-0: al centro, sin malabar
       ny = curY + (ty - curY) * 0.6;
     }
     state._ball.style.left = nx + '%';
@@ -1424,7 +1653,15 @@
 
   function loop(){
     if (!state.running) return;
-    if (state.winmode === 'tiempo' && !state.paused){
+    if (state._rounds){
+      // BOXEO POR ROUNDS: cuenta atrás de 3 min por round (congelada en el descanso).
+      if (!state.paused && !state._roundBreak){
+        const left = Math.max(0, ROUND_DUR - (performance.now() - state._roundStartTs) / 1000);
+        $('#hudGoal').textContent = `🥊 R${state._roundNum} · ${fmtTime(left, true)}`;
+        $('#hudGoal').classList.toggle('warn', left <= 10);
+        if (left <= 0) endRound();
+      }
+    } else if (state.winmode === 'tiempo' && !state.paused){
       const left = Math.max(0, state.duration - (performance.now() - state.startTs)/1000);
       $('#hudGoal').textContent = '⏱️ ' + fmtTime(left, state.duration >= 60);
       $('#hudGoal').classList.toggle('warn', left <= 10);   // aviso de urgencia
@@ -1444,7 +1681,12 @@
     state.paused = !state.paused;
     $('#pauseBtn').textContent = state.paused ? '▶' : '⏸';
     if (state.paused) state.pausedAt = performance.now();
-    else if (state.pausedAt){ state.startTs += performance.now() - state.pausedAt; state.pausedAt = 0; }
+    else if (state.pausedAt){
+      const d = performance.now() - state.pausedAt;
+      state.startTs += d;
+      if (state._roundStartTs) state._roundStartTs += d;   // el cronómetro del round también espera
+      state.pausedAt = 0;
+    }
   }
 
   /* ============================================================
@@ -1453,13 +1695,19 @@
   function endGame(){
     state.running = false;
     cancelAnimationFrame(state.rafTimer);
+    clearTimeout(state._roundTimer);                       // por si quedaba un descanso pendiente (boxeo)
     window.removeEventListener('keydown', onGameKey, true);
     SFX.crowd.stop();                                       // corta el ambiente de público
 
-    const ranking = [...state.racers].sort((a,b) => b.score - a.score);
+    // BOXEO POR ROUNDS: el ganador es quien ganó MÁS rounds (no quien tiene más puntos).
+    const ranking = state._rounds
+      ? [...state.racers].sort((a,b) => (b.rounds - a.rounds) || (b.score - a.score))
+      : [...state.racers].sort((a,b) => b.score - a.score);
     const w = ranking[0];
     const duelo = ranking.length === 2;   // 1v1 / 2v2 / 3v3: cara a cara
-    const empate = ranking.length >= 2 && ranking[0].score === ranking[1].score; // mismo puntaje arriba
+    const empate = ranking.length >= 2 &&
+      (state._rounds ? ranking[0].rounds === ranking[1].rounds
+                     : ranking[0].score === ranking[1].score); // mismo resultado arriba
 
     // título / medalla / botón según haya ganador o empate
     $('#winMedal').textContent = empate ? '🤝' : '🏆';
@@ -1530,7 +1778,7 @@
         <div class="fo-photo ${cfg.photo}">${avas}${cfg.adorno}</div>
         <div class="fo-tag ${cfg.tag}">${cfg.txt}</div>
         <div class="fo-name">${r.name}</div>
-        <div class="fo-pts">${r.score} <small>pts</small></div>
+        <div class="fo-pts">${state._rounds ? `${r.rounds} <small>rounds</small>` : `${r.score} <small>pts</small>`}</div>
       </div>`;
   }
 
@@ -1562,9 +1810,28 @@
   /* ============================================================
      EVENTOS UI
      ============================================================ */
+  /* ---------- MODO PRUEBA (sin Live): @UsuarioPrueba ---------- */
+  function isDemoUser(u){ return /^@?usuarioprueba$/i.test((u || '').trim()); }
+  // alimenta regalos simulados a competidores al azar para ver el juego reaccionar
+  function startDemoFeed(){
+    stopDemoFeed();
+    state._demoIv = setInterval(() => {
+      if (!state.running || state.paused) return;
+      const rs = state.racers; if (!rs.length) return;
+      const r = rs[(Math.random() * rs.length) | 0];
+      const m = r.members.find(x => x.gift);
+      const n = 1 + (Math.random() * 3 | 0);
+      if (m && window.TikTok && state.giftMap.has(m.gift)) window.TikTok.simulateGift(m.gift, n); // flujo real de regalo
+      else addPoint(r, n);                                                                       // respaldo: suma directa
+    }, 650);
+  }
+  function stopDemoFeed(){ if (state._demoIv){ clearInterval(state._demoIv); state._demoIv = null; } }
+
   function stopRun(){
     state.running = false;
     cancelAnimationFrame(state.rafTimer);
+    stopDemoFeed();                                        // detiene los regalos simulados (modo prueba)
+    clearTimeout(state._roundTimer);                       // corta el descanso entre rounds (boxeo)
     window.removeEventListener('keydown', onGameKey, true);
     SFX.crowd.stop();                                       // corta el ambiente de público
   }
@@ -1647,6 +1914,14 @@
       u = (u || '').trim();
       if (!u){ if (userInput) userInput.focus(); return; }
       try { localStorage.setItem(TT_USER_KEY, u); } catch(_){}   // guarda para la próxima vez
+      // MODO PRUEBA: @UsuarioPrueba "conecta" como un Live (sin WebSocket) para
+      // probar el juego en seco; durante la partida alimenta regalos simulados.
+      if (isDemoUser(u)){
+        state._demo = true;
+        TikTok.simulateStatus('connected', '🧪 Modo prueba (sin Live) — @' + u.replace(/^@/, ''));
+        return;
+      }
+      state._demo = false;
       TikTok.connect(u);
     };
     if (connBtn) connBtn.onclick = () => doConnect(userInput && userInput.value);

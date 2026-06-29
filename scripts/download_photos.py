@@ -24,6 +24,11 @@ PEOPLE = {
     # ---- boxeo (mundial) ----
     'ALI': 'Muhammad_Ali', 'TYS': 'Mike_Tyson', 'FMW': 'Floyd_Mayweather',
     'PAC': 'Manny_Pacquiao', 'GGG': 'Gennadi_Golovkin', 'KLI': 'Vitali_Klitschko',
+    'TOP': 'Ilia_Topuria',
+    # ---- boxeo (estrellas actuales) ----
+    'BNV': 'David_Benavidez', 'BET': 'Artur_Beterbiev', 'BIV': 'Dmitry_Bivol',
+    'INO': 'Naoya_Inoue', 'USY': 'Oleksandr_Usyk', 'SHA': 'Shakur_Stevenson',
+    'BAM': 'Jesse_Rodriguez',   # nota: Wikipedia no tiene foto suya (cae a la insignia)
     # ---- resistencia (LatAm) ----
     'NAI': 'Nairo_Quintana', 'EGA': 'Egan_Bernal', 'URA': 'Rigoberto_Urán',
     'CAR': 'Richard_Carapaz', 'LIM': 'Vanderlei_Cordeiro_de_Lima',

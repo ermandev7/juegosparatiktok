@@ -346,6 +346,34 @@ body{
 /* en versus mostramos los dos nombres + corona en la cancha, no el líder único del HUD */
 .scene.arena-mode .leader-box{display:none}
 
+/* PODIO Top-3 en vivo: tres "píldoras" flotando arriba (2º · 1º · 3º).
+   El campeón va al centro, más grande y elevado. */
+.podium{position:relative; z-index:6; display:flex; justify-content:center;
+  align-items:flex-end; gap:10px; padding:10px 10px 2px; pointer-events:none}
+.pod-slot{display:flex; flex-direction:column; align-items:center; gap:2px;
+  background:linear-gradient(180deg,rgba(12,18,38,.82),rgba(12,18,38,.62));
+  border:1px solid var(--card-bd); border-radius:16px; padding:6px 12px 8px; min-width:64px;
+  box-shadow:0 6px 16px rgba(0,0,0,.45); backdrop-filter:blur(3px); animation:podIn .35s ease both}
+.pod-medal{font-size:18px; line-height:1; margin-top:-16px;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.pod-ava{display:inline-flex; align-items:center; line-height:0}
+.pod-ava img.flag-sm{width:30px; height:20px}
+.pod-ava .emoji{font-size:24px}
+.pod-ava .photo, .pod-ava .badge{width:34px; height:34px}
+.pod-sc{font-weight:900; font-size:15px; color:var(--gold);
+  background:rgba(0,0,0,.35); border-radius:12px; padding:0 9px; min-width:26px; text-align:center}
+/* el 1º (centro) destaca: borde dorado, más grande y elevado */
+.pod-rank-1{order:2; border-color:var(--gold); transform:translateY(-8px) scale(1.12);
+  background:linear-gradient(180deg,rgba(255,209,102,.28),rgba(12,18,38,.66))}
+.pod-rank-1 .pod-medal{font-size:24px; margin-top:-20px}
+.pod-rank-2{order:1}
+.pod-rank-3{order:3}
+@keyframes podIn{from{opacity:0; transform:translateY(-10px) scale(.9)}}
+.pod-rank-1{animation-name:podInTop}
+@keyframes podInTop{from{opacity:0; transform:translateY(-18px) scale(.9)}
+  to{opacity:1; transform:translateY(-8px) scale(1.12)}}
+.scene.arena-mode .podium{display:none}
+
 /* Pista */
 .track{position:relative; z-index:2; padding:14px; display:flex; flex-direction:column; gap:8px}
 
@@ -505,6 +533,132 @@ body{
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.45) translateY(-6px)}100%{transform:scale(1)}}
 .runner.leader .ava{filter:drop-shadow(0 0 9px var(--gold)) drop-shadow(0 4px 6px #0008)}
 
+/* ============================================================
+   MUÑEQUITO PATEADOR (carriles de fútbol: banderas / comidas)
+   Trota en sitio; al puntuar (regalo/tecla) PATEA el balón al arco.
+   ============================================================ */
+.kicker{position:relative; display:inline-flex; align-items:flex-end; justify-content:center;
+  height:calc(var(--lane-h,80px) - 14px); width:calc((var(--lane-h,80px) - 14px)*.62);
+  filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}
+/* LÍNEAS DE VELOCIDAD detrás (a la izquierda): refuerzan que avanza hacia la derecha */
+.kicker::before{content:''; position:absolute; left:-46%; top:30%; width:52%; height:34%;
+  pointer-events:none; z-index:0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,.6)) no-repeat left 12%  / 100% 2px,
+    linear-gradient(90deg, transparent, rgba(255,255,255,.5)) no-repeat left 50%  / 76%  2px,
+    linear-gradient(90deg, transparent, rgba(255,255,255,.6)) no-repeat left 88%  / 92%  2px;
+  animation:kspeed .5s linear infinite; animation-delay:var(--delay,0s)}
+@keyframes kspeed{0%{opacity:0; transform:translateX(35%)}35%{opacity:.85}100%{opacity:0; transform:translateX(-25%)}}
+.k-fig{width:100%; height:100%; overflow:visible; position:relative; z-index:1}
+.k-fig line{fill:none; stroke-linecap:round}
+.k-fig .leg{stroke:#eef2f8; stroke-width:7}            /* piernas claras: visibles en cualquier fondo */
+.k-fig .ktorso{stroke:var(--jersey,#3a86ff); stroke-width:11}   /* torso inclinado (camiseta) */
+.k-fig .arm{stroke:var(--jersey,#3a86ff); stroke-width:6}
+.k-fig .khead{fill:#ffe0bd; stroke:#1b2434; stroke-width:2}     /* cabeza (piel) con contorno */
+.k-fig .kl, .k-fig .karm{transform-box:view-box}
+.k-fig .kl-b{transform-origin:20px 40px}              /* cadera (pierna trasera) */
+.k-fig .kl-f{transform-origin:21px 40px}              /* cadera (pierna delantera) */
+.k-fig .karm{transform-origin:26px 25px}              /* hombro */
+/* CARRERA de perfil: zancada horizontal (pierna delantera adelante, trasera atrás) */
+.k-fig .kl-f{animation:kstrideF var(--dur,.5s) ease-in-out infinite; animation-delay:var(--delay,0s)}
+.k-fig .kl-b, .k-fig .karm{animation:kstrideB var(--dur,.5s) ease-in-out infinite; animation-delay:var(--delay,0s)}
+@keyframes kstrideF{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(16deg)}}
+@keyframes kstrideB{0%,100%{transform:rotate(22deg)}50%{transform:rotate(-16deg)}}
+/* balón ADELANTE (hacia el arco / sentido de avance) y a los pies */
+.k-ball{position:absolute; right:-24%; bottom:1%; z-index:2; font-size:calc(var(--lane-h,80px)*.32);
+  line-height:1; animation:kbob 1s ease-in-out infinite; animation-delay:var(--delay,0s)}
+@keyframes kbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14%)}}
+/* distintivo (bandera/foto/emoji) sobre la cabeza (la cabeza va a la derecha) */
+.k-sign{position:absolute; top:-2%; left:62%; transform:translateX(-50%); z-index:3; line-height:0}
+.k-sign img{width:calc(var(--lane-h,80px)*.34); height:calc(var(--lane-h,80px)*.23);
+  object-fit:cover; border-radius:3px; border:1px solid rgba(255,255,255,.6); box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.k-sign .photo, .k-sign .badge{width:calc(var(--lane-h,80px)*.3); height:calc(var(--lane-h,80px)*.3)}
+.k-sign .emoji{font-size:calc(var(--lane-h,80px)*.34)}
+/* PATADA al puntuar: la pierna delantera dispara y el balón sale volando.
+   Solo carriles (.kicker) y fútbol-arena (.amk.kik); el boxeo golpea (abajo). */
+.runner.bump .kicker .k-fig .kl-f,
+.runner.bump .amk.kik .k-fig .kl-f{animation:kkick .45s cubic-bezier(.3,1.5,.4,1)}
+@keyframes kkick{0%{transform:rotate(-28deg)}35%{transform:rotate(-70deg)}100%{transform:rotate(-28deg)}}
+.runner.bump .kicker .k-ball{animation:kshoot .5s ease-out}
+@keyframes kshoot{0%{transform:translate(0,0) rotate(0)}
+  45%{transform:translate(150%,-70%) rotate(280deg)}100%{transform:translate(0,0) rotate(360deg)}}
+/* líder: halo dorado en el muñequito */
+.runner.leader .kicker{filter:drop-shadow(0 0 8px var(--gold)) drop-shadow(0 4px 5px rgba(0,0,0,.5))}
+
+/* ============================================================
+   MUÑEQUITO DE ARENA (boxeo / fútbol-versus): cuerpo + FOTO como cabeza
+   ============================================================ */
+.amk{position:relative; display:inline-flex; align-items:flex-end; justify-content:center;
+  width:calc(var(--rav,84px)*.95); height:calc(var(--rav,84px)*1.25);
+  filter:drop-shadow(0 5px 6px rgba(0,0,0,.5))}
+.amk .k-fig{width:100%; height:100%; overflow:visible}
+/* CABEZA = foto del competidor (circular), sobre los hombros. La foto se
+   contra-voltea (--flip) para no salir espejada cuando el equipo mira a la izq. */
+.amk-head{position:absolute; top:-7%; left:58%; z-index:3;
+  width:calc(var(--rav,84px)*.62); height:calc(var(--rav,84px)*.62);
+  transform:translateX(-50%) scaleX(var(--flip,1))}
+.amk-head .ava-photo{display:inline-flex; width:100%; height:100%}
+.amk-head img.photo, .amk-head .badge, .amk-head img.flag{
+  width:100% !important; height:100% !important; border-radius:50% !important; object-fit:cover;
+  border:2.5px solid #fff; box-shadow:0 2px 7px rgba(0,0,0,.55)}
+.amk-head .emoji{font-size:calc(var(--rav,84px)*.5)}
+/* FÚTBOL-ARENA: muñequito MÁS GRANDE y con MOVIMIENTO INDIVIDUAL real. No basta
+   con desfasar el MISMO rebote (se siguen viendo "juntos"): a cada jugador se le
+   asigna un PATRÓN distinto (--bobname: idleA..idleD) que combina salto + balanceo
+   lateral + leve giro en DIRECCIONES distintas, con su propia velocidad (--bdur)
+   y fase (--delay). Así no se mueven todos al mismo lado al mismo tiempo. */
+.amk.kik{width:calc(var(--rav,84px)*1.1); height:calc(var(--rav,84px)*1.5);
+  animation:var(--bobname,idleA) var(--bdur,.85s) ease-in-out infinite; animation-delay:var(--delay,0s)}
+/* sube y baja, ladeándose a la IZQUIERDA */
+@keyframes idleA{0%,100%{transform:translate(0,0) rotate(0)}
+  50%{transform:translate(-7%,-8%) rotate(-5deg)}}
+/* sube y baja, ladeándose a la DERECHA */
+@keyframes idleB{0%,100%{transform:translate(0,0) rotate(0)}
+  50%{transform:translate(7%,-8%) rotate(5deg)}}
+/* salto más vertical, balanceo en dos tiempos (izq y der) */
+@keyframes idleC{0%,100%{transform:translate(0,0) rotate(0)}
+  25%{transform:translate(-5%,-6%) rotate(-4deg)}
+  75%{transform:translate(5%,-6%) rotate(4deg)}}
+/* trote nervioso: poco salto pero vaivén lateral marcado */
+@keyframes idleD{0%,100%{transform:translate(-6%,0) rotate(-3deg)}
+  50%{transform:translate(6%,-5%) rotate(3deg)}}
+/* DERIVA INDIVIDUAL: capa intermedia que mueve a cada jugador un poco por la cancha
+   (lento) por su cuenta. Va SEPARADA del rebote/trote (esos siguen en .amk.kik), así
+   los transforms se componen sin pisarse. Amplitud chica -> la alineación se mantiene. */
+.amk-wander{display:inline-flex;
+  animation:var(--wander,wanderA) var(--wdur,3.4s) ease-in-out infinite; animation-delay:var(--wdelay,0s)}
+@keyframes wanderA{0%,100%{transform:translate(0,0)}35%{transform:translate(9%,-3%)}70%{transform:translate(-5%,3%)}}
+@keyframes wanderB{0%,100%{transform:translate(0,0)}50%{transform:translate(-10%,4%)}}
+@keyframes wanderC{0%,100%{transform:translate(0,0)}40%{transform:translate(6%,5%)}75%{transform:translate(8%,-3%)}}
+@keyframes wanderD{0%,100%{transform:translate(0,0)}50%{transform:translate(3%,-2%)}}  /* casi quieto */
+.amk.kik .leg{stroke-width:8}
+.amk.kik .ktorso{stroke-width:13}
+.amk.kik .arm{stroke-width:7}
+/* BOXEO: boxeadores MÁS GRANDES — se sube --rav solo en el ring (cuerpo + foto-cabeza
+   escalan juntos). La especificidad (0,3,0) gana a .track.arena sin depender del orden. */
+.track.arena.arena-ring{--rav:116px}
+/* BOXEO: muñeco MÁS GRANDE (que se aprecie el cuerpo); guardia + golpe pronunciado. */
+.amk.boxer{width:calc(var(--rav,84px)*1.15); height:calc(var(--rav,84px)*1.6)}
+.amk.boxer .ktorso{stroke-width:15}          /* cuerpo más robusto */
+.amk.boxer .leg{stroke-width:9}
+.amk.boxer .arm{stroke-width:7}
+.amk.boxer .glove{fill:#d11f3a; stroke:#1b2434; stroke-width:2}
+.amk.boxer .k-fig .karm{animation:none; transform-box:view-box; transform-origin:22px 28px}
+/* BAILE DE BOXEO: rebota ligero de pies + las piernas hacen "shuffle" (peso de un
+   lado a otro), como el footwork de un boxeador. */
+.amk.boxer{animation:boxbounce .5s ease-in-out infinite}
+@keyframes boxbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8%)}}
+.amk.boxer .k-fig .kl-b{animation:boxstepA .5s ease-in-out infinite}
+.amk.boxer .k-fig .kl-f{animation:boxstepB .5s ease-in-out infinite}
+@keyframes boxstepA{0%,100%{transform:rotate(7deg)}50%{transform:rotate(-3deg)}}
+@keyframes boxstepB{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(7deg)}}
+/* GOLPE: el brazo delantero se lanza fuerte y el guante crece (más pronunciado) */
+.runner.bump .amk.boxer .karm-f{animation:kpunch .3s cubic-bezier(.25,1.8,.4,1)}
+@keyframes kpunch{0%{transform:translateX(0) scale(1)}
+  42%{transform:translateX(16px) scale(1.18)}100%{transform:translateX(0) scale(1)}}
+/* líder en arena: halo dorado */
+.runner.leader .amk{filter:drop-shadow(0 0 9px var(--gold)) drop-shadow(0 5px 6px rgba(0,0,0,.5))}
+
 /* banderas pequeñas en la columna de info / roster / podio */
 img.flag-sm{width:24px; height:16px; object-fit:cover; border-radius:3px; border:1px solid rgba(255,255,255,.5); vertical-align:middle}
 
@@ -546,6 +700,66 @@ img.flag-sm{width:24px; height:16px; object-fit:cover; border-radius:3px; border
 .vs-name .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .vs-name .sc{background:var(--c,#ffd166); color:#1a1a1a; border-radius:12px; padding:1px 9px;
   min-width:26px; text-align:center; font-variant-numeric:tabular-nums}
+/* pips de rounds ganados (boxeo): ●=ganado, ○=por jugar (de 5) */
+.vs-name .rw{letter-spacing:1px; font-size:.72em; color:var(--c,#ffd166);
+  text-shadow:0 1px 2px rgba(0,0,0,.7)}
+
+/* ============================================================
+   BOXEO POR ROUNDS: cartel grande "ROUND N" + chica del ring con su letrero
+   ============================================================ */
+.center-banner.cb-round{font-size:clamp(44px,10vw,104px); color:var(--gold);
+  -webkit-text-stroke:3px rgba(0,0,0,.45)}
+.center-banner.cb-roundend{font-size:clamp(22px,4.5vw,46px); color:#fff}
+/* el ring "descansa" entre rounds: se atenúan los boxeadores para destacar a la modelo */
+.arena-field.resting .fighter{opacity:.45; filter:grayscale(.4) brightness(.8); transition:opacity .4s}
+
+/* boxeo: el cronómetro del round mueve a los boxeadores; transición suave para que
+   se vea cómo CAMINAN a su esquina (descanso) y vuelven al centro (a pelear). */
+.arena-ring .fighter{transition:left .55s ease, right .55s ease, top .55s ease}
+
+/* CHICA DEL RING: entra y da una VUELTA completa al ring con el cartel "ROUND N"
+   en alto (perímetro: centro-abajo → esquina inf. izq → sup. izq → sup. der →
+   inf. der → centro), y se retira. */
+.ring-girl{position:absolute; top:80%; left:50%; z-index:8; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center;
+  transform:translate(-50%,-50%); animation:rgLap 5s linear forwards}
+/* vuelta (óvalo) por el CENTRO-bajo del ring, sin chocar con los boxeadores que
+   descansan en las esquinas de arriba. */
+@keyframes rgLap{
+  0%  {left:50%; top:82%; opacity:0}
+  10% {left:50%; top:82%; opacity:1}
+  30% {left:23%; top:64%; opacity:1}
+  50% {left:50%; top:50%; opacity:1}
+  70% {left:77%; top:64%; opacity:1}
+  90% {left:50%; top:82%; opacity:1}
+  100%{left:50%; top:82%; opacity:0}}
+.rg-card{display:flex; flex-direction:column; align-items:center; line-height:1;
+  background:linear-gradient(180deg,#fff,#f1d27a); color:#8a1a2e; font-weight:900;
+  border:3px solid #c9a227; border-radius:9px; padding:5px 16px 7px; margin-bottom:-12px;
+  box-shadow:0 7px 16px rgba(0,0,0,.55); animation:rgCard 5s ease-in-out forwards}
+.rg-card span{font-size:clamp(11px,1.5vw,15px); letter-spacing:2px}
+.rg-card b{font-size:clamp(26px,4vw,46px); margin-top:1px}
+@keyframes rgCard{0%,16%{transform:translateY(8px) scale(.9)}
+  26%{transform:translateY(0) scale(1.06)}40%,84%{transform:translateY(0) scale(1)}}
+.rg-fig{width:clamp(74px,13vh,124px); height:auto; overflow:visible;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.55)); animation:rgBob .6s ease-in-out infinite}
+@keyframes rgBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4%)}}
+.rg-fig line{stroke-linecap:round; fill:none}
+.rg-fig .rg-arm{stroke:#f3d2b8; stroke-width:6}
+.rg-fig .rg-leg{stroke:#f3d2b8; stroke-width:7}
+.rg-fig .rg-leg-f{animation:rgStepF .6s ease-in-out infinite}
+.rg-fig .rg-leg-b{animation:rgStepB .6s ease-in-out infinite}
+.rg-fig .rg-legs{transform-box:view-box}
+.rg-fig .rg-leg-f{transform-origin:30px 92px} .rg-fig .rg-leg-b{transform-origin:30px 92px}
+@keyframes rgStepF{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes rgStepB{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+.rg-fig .rg-dress{fill:#e8467e; stroke:#b32a5e; stroke-width:1.5}
+.rg-fig .rg-head{fill:#ffe0bd; stroke:#1b2434; stroke-width:1.5}
+.rg-fig .rg-hair{fill:#3a2418}
+/* manos que sostienen el cartel + cara sonriente */
+.rg-fig .rg-hand{fill:#ffe0bd; stroke:#1b2434; stroke-width:1.2}
+.rg-fig .rg-eye{fill:#1b2434; stroke:none}
+.rg-fig .rg-smile{fill:none; stroke:#c0392b; stroke-width:1.7; stroke-linecap:round}
 
 /* corona que se desliza al lado del que va ganando, con salto */
 .vs-crown{position:absolute; top:-4px; left:50%; z-index:6; font-size:clamp(24px,3.4vw,36px);
@@ -592,12 +806,40 @@ img.flag-sm{width:24px; height:16px; object-fit:cover; border-radius:3px; border
    no encimados uno sobre otro. form-1 = un solo jugador (fila). */
 .arena .fighter .ava{display:flex; flex-direction:column; align-items:center; gap:60px}
 .arena .fighter .ava.form-1{flex-direction:row; gap:10px}
-.arena .fighter .amem{display:flex; transition:transform .3s}
-.arena .fighter .ava.form-2 .amem:nth-child(1){transform:translateX(-40px)}
-.arena .fighter .ava.form-2 .amem:nth-child(2){transform:translateX(40px)}
-.arena .fighter .ava.form-3 .amem:nth-child(1){transform:translateX(-44px)}
-.arena .fighter .ava.form-3 .amem:nth-child(2){transform:translateX(44px)}
-.arena .fighter .ava.form-3 .amem:nth-child(3){transform:translateX(-44px)}
+/* Los dos equipos se MIRAN de frente (>< y no >> ni <<): el de la izquierda
+   apunta a la derecha y el de la derecha apunta a la izquierda. Se basa en el
+   lado FÍSICO (data-side), que sí se actualiza en el cambio de cancha. */
+.arena .fighter{--flip:1}
+.arena .fighter[data-side="r"]{--flip:-1}
+/* La FORMACIÓN es una cuña que apunta al centro: izquierda ">" y derecha "<".
+   El signo del desplazamiento horizontal se invierte con --flip (lado derecho),
+   así el jugador del MEDIO queda adelante (apex hacia el rival) y los otros dos
+   atrás (arriba/abajo). scaleX(--flip) además voltea la foto para que miren al centro. */
+.arena .fighter .amem{display:flex; transition:transform .3s; transform:scaleX(var(--flip,1))}
+.arena .fighter .ava.form-2 .amem:nth-child(1){transform:translateX(calc(-40px * var(--flip,1))) scaleX(var(--flip,1))}
+.arena .fighter .ava.form-2 .amem:nth-child(2){transform:translateX(calc( 40px * var(--flip,1))) scaleX(var(--flip,1))}
+.arena .fighter .ava.form-3 .amem:nth-child(1){transform:translateX(calc(-44px * var(--flip,1))) scaleX(var(--flip,1))}
+.arena .fighter .ava.form-3 .amem:nth-child(2){transform:translateX(calc( 44px * var(--flip,1))) scaleX(var(--flip,1))}
+.arena .fighter .ava.form-3 .amem:nth-child(3){transform:translateX(calc(-44px * var(--flip,1))) scaleX(var(--flip,1))}
+/* Equipos GRANDES (5v5 / 7v7): DOS columnas escalonadas — línea de ATRÁS (impares,
+   slots 1·3·5·7) y línea de ADELANTE hacia el centro (pares, slots 2·4·6), bien
+   separadas en horizontal para que se lean como dos líneas (no un zigzag). */
+/* Muñequitos MÁS GRANDES también en equipos grandes. El gap de flex NO admite
+   valores negativos, así que para SOLAPARLOS en vertical (y que quepan grandes)
+   usamos margin-top negativo en cada muñeco salvo el primero. Como además se
+   separan en horizontal (línea adelante/atrás), el solape no los hace chocar. */
+.arena .fighter .ava.form-4, .arena .fighter .ava.form-5{--rav:60px; gap:0}
+.arena .fighter .ava.form-6, .arena .fighter .ava.form-7{--rav:50px; gap:0}
+.arena .fighter .ava.form-4 .amem:not(:first-child),
+.arena .fighter .ava.form-5 .amem:not(:first-child){margin-top:-18px}
+.arena .fighter .ava.form-6 .amem:not(:first-child),
+.arena .fighter .ava.form-7 .amem:not(:first-child){margin-top:-26px}
+.arena .fighter .ava.form-4 .amem:nth-child(even), .arena .fighter .ava.form-5 .amem:nth-child(even),
+.arena .fighter .ava.form-6 .amem:nth-child(even), .arena .fighter .ava.form-7 .amem:nth-child(even){
+  transform:translateX(calc( 46px * var(--flip,1))) scaleX(var(--flip,1))}   /* ADELANTE (hacia el centro) */
+.arena .fighter .ava.form-4 .amem:nth-child(odd), .arena .fighter .ava.form-5 .amem:nth-child(odd),
+.arena .fighter .ava.form-6 .amem:nth-child(odd), .arena .fighter .ava.form-7 .amem:nth-child(odd){
+  transform:translateX(calc(-46px * var(--flip,1))) scaleX(var(--flip,1))}     /* ATRÁS */
 
 /* Cartel central (medio tiempo / avisos) */
 .center-banner{position:absolute; left:50%; top:42%; z-index:9; pointer-events:none; white-space:nowrap;
